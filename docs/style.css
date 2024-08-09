@@ -5,10 +5,9 @@ body {
 }
 div.subheader {
     background-color: #53ff45;
-    margin-left: 10%;
-    margin-right: 10%;
-    color: #111;
+    margin-left: 2%;
+    margin-right: 2%;
 }
 div.subheader h2 {
-    margin: 10%;
+    color: #111;
 }
