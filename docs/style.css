@@ -3,10 +3,16 @@ body {
     margin: none;
     color: #222;
 }
+.container {
+    margin: 2%;
+}
+h1 {
+    margin: 1%;
+}
 div.subheader {
     background-color: #53ff45;
-    margin-left: 2%;
-    margin-right: 2%;
+    margin-left: none;
+    margin-right: none;
 }
 div.subheader h2 {
     color: #111;
