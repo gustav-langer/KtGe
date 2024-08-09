@@ -4,13 +4,11 @@ body {
     color: #222;
 }
 div.subheader {
-    background-color: #DFDFDF;
-    margin-left: none;
-    margin-right: none;
+    background-color: #53ff45;
+    margin-left: 10%;
+    margin-right: 10%;
     color: #111;
-    width: 100%;
 }
 div.subheader h2 {
-    margin: none;
-    width: 100%;
+    margin: 10%;
 }
