@@ -3,7 +3,7 @@ body {
     margin: none;
     color: #222;
 }
-.subheader {
+div.subheader {
     background-color: #F4F4F4;
     margin-left: none;
     margin-right: none;
