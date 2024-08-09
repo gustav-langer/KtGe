@@ -10,4 +10,6 @@ div.subheader {
 }
 div.subheader h2 {
     color: #111;
+    margin-left: 1%;
+    margin-right: 1%;
 }
