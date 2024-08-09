@@ -3,10 +3,10 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-group = "org.openrndr.template"
+group = "de.thecommcraft"
 version = "1.0.0"
 
-val applicationMainClass = "TemplateProgramKt"
+val applicationMainClass = "de.thecommcraft.ktgeDemo.MainKt"
 
 /**  ## additional ORX features to be added to this project */
 val orxFeatures = setOf<String>(
