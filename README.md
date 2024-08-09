@@ -1,3 +1,3 @@
 # KtGe
 
-A simple package for creating games. Not yet done.
+A simple package for creating games, based on [OPENRNDR](https://openrndr.org/). Not yet done.
