@@ -8,4 +8,9 @@ div.subheader {
     margin-left: none;
     margin-right: none;
     color: #111;
+    width: 100%;
+}
+div.subheader h2 {
+    margin: none;
+    width: 100%;
 }
