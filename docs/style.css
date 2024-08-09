@@ -3,5 +3,6 @@ body {
 }
 .subheader {
     background-color: #EEE;
-    width: 100%;
+    margin-left: none;
+    margin-right: none;
 }
