@@ -2,5 +2,6 @@ body {
     font-family: Montserrat, sans-serif;
 }
 .subheader {
-    background-color: #DDD;
+    background-color: #EEE;
+    width: 100%;
 }
