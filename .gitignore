@@ -8,4 +8,4 @@ screenshots/
 gui-parameters/
 ffmpegOutput.txt
 ShaderError.glsl
-
+.vscode
