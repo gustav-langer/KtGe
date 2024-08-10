@@ -36,7 +36,7 @@ class Sprite(
     initialState: SpriteState
 ) : Drawable {
     var state: SpriteState = initialState
-    var costumeNum: Int = costumes.size()
+    var costumeNum: Int = costumes.size
 
     fun update(program: Program) {
         state = program.stateFun(state)
