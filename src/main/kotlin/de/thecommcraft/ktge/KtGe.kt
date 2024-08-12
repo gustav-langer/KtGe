@@ -3,6 +3,7 @@ package de.thecommcraft.ktge
 import org.openrndr.Configuration
 import org.openrndr.Program
 import org.openrndr.application
+import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.ColorBuffer
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.FontMap
@@ -127,6 +128,16 @@ class ImageBackground : Background {
         program.drawer.config()
         program.drawer.image(bg.value)
     }
+}
+
+class SolidBackground(val color: ColorRGBa) : Background {
+    override fun draw(program: Program) {
+        program.drawer.clear(color)
+    }
+}
+
+object NoBackground : Background {
+    override fun draw(program: Program) {}
 }
 
 // Main
