@@ -31,7 +31,7 @@ val openrndrText = sprite {
 
 val testAudioGroup: AudioGroup = audioGroup {
     audio {
-        filePath = "C:\\Users\\simon\\Downloads\\hitHurt(4).wav"
+        filePath = "data/sounds/hit.wav"
         name = "hit"
     }
 }

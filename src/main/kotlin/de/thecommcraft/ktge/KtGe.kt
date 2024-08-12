@@ -20,6 +20,7 @@ interface Drawable {
 }
 
 typealias BuildFun<T> = T.() -> Unit
+typealias InjectFun<T> = T.() -> Unit
 
 interface Builder<T> {
     fun build(): T
@@ -107,10 +108,10 @@ class DrawerCostume(val drawCostume: Program.(SpriteState) -> Unit) : Costume {
     }
 }
 
-class TextCostume(val text: String, val font: Lazy<FontMap>, val config: Drawer.() -> Unit) : Costume {
+class TextCostume(val text: String, val font: Lazy<FontMap>, val preDraw: InjectFun<Drawer>) : Costume {
     override fun draw(state: SpriteState, program: Program) = with(program) {
         drawer.fontMap = font.value
-        drawer.config()
+        drawer.preDraw()
         drawer.text(text, state.position)
     }
 }
@@ -120,20 +121,20 @@ interface Background : Drawable
 
 class ImageBackground : Background {
     val bg: Lazy<ColorBuffer>
-    val config: BuildFun<Drawer>
+    val preDraw: InjectFun<Drawer>
 
-    constructor(image: ColorBuffer, config: BuildFun<Drawer>) {
+    constructor(image: ColorBuffer, preDraw: InjectFun<Drawer>) {
         bg = lazy { image }
-        this.config = config
+        this.preDraw = preDraw
     }
 
-    constructor(path: String, config: BuildFun<Drawer>) {
+    constructor(path: String, preDraw: InjectFun<Drawer>) {
         bg = lazy { loadImage(path) }
-        this.config = config
+        this.preDraw = preDraw
     }
 
     override fun draw(program: Program) {
-        program.drawer.config()
+        program.drawer.preDraw()
         program.drawer.image(bg.value)
     }
 }
@@ -218,7 +219,7 @@ fun loadAudio(audioFun : AudioLoader.() -> Unit): AudioLoader {
 val audioGroup : (BuildFun<AudioGroupBuilder>) -> AudioGroup = build(::AudioGroupBuilder)
 
 // Main
-fun ktge(sprites: List<Sprite>, config: BuildFun<Configuration> = {}, background: Background = NoBackground) {
+fun ktge(sprites: List<Sprite>, config: InjectFun<Configuration> = {}, background: Background = NoBackground) {
     //application(demoBuilder) // runs demo application for now
     application {
         configure(config)
