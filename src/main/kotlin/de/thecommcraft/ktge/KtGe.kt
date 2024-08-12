@@ -98,10 +98,10 @@ class DrawerCostume(val drawCostume: Program.(SpriteState) -> Unit) : Costume {
     }
 }
 
-class TextCostume(val text: String, val font: Lazy<FontMap>, val preDraw: Drawer.() -> Unit) : Costume {
+class TextCostume(val text: String, val font: Lazy<FontMap>, val config: Drawer.() -> Unit) : Costume {
     override fun draw(state: SpriteState, program: Program) = with(program) {
         drawer.fontMap = font.value
-        drawer.preDraw()
+        drawer.config()
         drawer.text(text, state.position)
     }
 }
@@ -111,20 +111,20 @@ interface Background : Drawable
 
 class ImageBackground : Background {
     val bg: Lazy<ColorBuffer>
-    val preDraw: BuildFun<Drawer>
+    val config: BuildFun<Drawer>
 
-    constructor(image: ColorBuffer, preDraw: BuildFun<Drawer>) {
+    constructor(image: ColorBuffer, config: BuildFun<Drawer>) {
         bg = lazy { image }
-        this.preDraw = preDraw
+        this.config = config
     }
 
-    constructor(path: String, preDraw: BuildFun<Drawer>) {
+    constructor(path: String, config: BuildFun<Drawer>) {
         bg = lazy { loadImage(path) }
-        this.preDraw = preDraw
+        this.config = config
     }
 
     override fun draw(program: Program) {
-        program.drawer.preDraw()
+        program.drawer.config()
         program.drawer.image(bg.value)
     }
 }
