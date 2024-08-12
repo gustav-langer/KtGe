@@ -36,14 +36,14 @@ class Sprite(
     initialState: SpriteState
 ) : Drawable {
     var state: SpriteState = initialState
-    var costumeNum: Int = costumeNames.size
+    var currentCostumeNum: Int = 0 // initially, the first costume is selected
 
     fun update(program: Program) {
         state = program.stateFun(state)
     }
 
     override fun draw(program: Program) {
-        costumes[costumeNum].draw(state, program)
+        costumes[currentCostumeNum].draw(state, program)
     }
 }
 
