@@ -141,7 +141,7 @@ object NoBackground : Background {
 }
 
 // Main
-fun ktge(sprites: List<Sprite>, config: BuildFun<Configuration>, background: Background) {
+fun ktge(sprites: List<Sprite>, config: BuildFun<Configuration> = {}, background: Background = NoBackground) {
     //application(demoBuilder) // runs demo application for now
     application {
         configure(config)
