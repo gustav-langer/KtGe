@@ -29,13 +29,23 @@ val openrndrText = sprite {
     stateFun = StateFun.position { Vector2(width / 2.0, height / 2.0) }
 }
 
-fun main() = ktge(
-    sprites = listOf(pinkCircle, openrndrText),
-    config = {
-        width = 768
-        height = 576
-    },
-    background = ImageBackground(
-        "data/images/pm5544.png",
-        preDraw = { drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2)) })
-)
+val testAudioGroup: AudioGroup = audioGroup {
+    audio {
+        filePath = "C:\\Users\\simon\\Downloads\\hitHurt(4).wav"
+        name = "hit"
+    }
+}
+
+fun main() {
+    testAudioGroup.playAudio("hit")
+    ktge(
+        sprites = listOf(pinkCircle, openrndrText),
+        config = {
+            width = 768
+            height = 576
+        },
+        background = ImageBackground(
+            "data/images/pm5544.png",
+            preDraw = { drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2)) })
+    )
+}

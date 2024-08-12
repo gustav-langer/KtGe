@@ -9,6 +9,10 @@ import org.openrndr.draw.Drawer
 import org.openrndr.draw.FontMap
 import org.openrndr.draw.loadImage
 import org.openrndr.math.Vector2
+import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.AudioInputStream
+import javax.sound.sampled.Clip
+import java.io.File
 
 // General Types
 interface Drawable {
@@ -27,6 +31,10 @@ fun <T, B : Builder<T>> build(initial: () -> B): (BuildFun<B>) -> T {
         t.init()
         return t.build()
     }
+}
+
+interface AudioPlayable {
+    fun play(): Unit
 }
 
 // Sprites
@@ -139,6 +147,75 @@ class SolidBackground(val color: ColorRGBa) : Background {
 object NoBackground : Background {
     override fun draw(program: Program) {}
 }
+
+// Audio
+class Audio(val file: File) : AudioPlayable {
+    val audioInputStream: AudioInputStream = AudioSystem.getAudioInputStream(file)
+    private val _audioClip: Clip = AudioSystem.getClip()
+    init {
+        _audioClip.open(audioInputStream)
+    }
+    override fun play() : Unit {
+        _audioClip.start()
+    }
+}
+
+class AudioGroup (
+    val audios: List<Audio>,
+    val audioNames: Map<String, Int>
+) {
+    fun selectAudio(audioName: String): Audio {
+        return audios[audioNames[audioName]!!]
+    }
+    fun playAudio(audioName: String): Unit {
+        selectAudio(audioName).play()
+    }
+    operator fun get(audioName: String): Audio {
+        return selectAudio(audioName)
+    }
+}
+
+class AudioGroupBuilder : Builder<AudioGroup> {
+    private val _audios: MutableList<Audio> = mutableListOf()
+    private val _audioNames: MutableMap<String, Int> = mutableMapOf()
+
+    fun audio(alb : AudioLoader.() -> Unit): Unit { // Audios need a name
+        val a = loadAudio(alb)
+        val loadedAudio = a.loadAudio()
+        val name = a.name!!
+        _audioNames[name] = _audios.size
+        _audios.add(loadedAudio)
+    }
+
+    override fun build(): AudioGroup =
+        AudioGroup(audios = _audios, audioNames = _audioNames)
+}
+
+class AudioLoader : AudioPlayable {
+    var filePath: String? = null
+    var name: String? = null
+    var loadedAudio : Audio? = null
+
+    fun loadAudio(): Audio {
+        if (loadedAudio != null) return loadedAudio!!
+        loadedAudio = Audio(File(filePath))
+        return loadedAudio!!
+    }
+
+    override fun play(): Unit {
+        loadAudio()
+        loadedAudio!!.play()
+    }
+}
+
+fun loadAudio(audioFun : AudioLoader.() -> Unit): AudioLoader {
+    val audioLoader = AudioLoader()
+    audioLoader.audioFun()
+    audioLoader.loadAudio()
+    return audioLoader
+}
+
+val audioGroup : (BuildFun<AudioGroupBuilder>) -> AudioGroup = build(::AudioGroupBuilder)
 
 // Main
 fun ktge(sprites: List<Sprite>, config: BuildFun<Configuration> = {}, background: Background = NoBackground) {
