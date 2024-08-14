@@ -1,7 +1,8 @@
 package de.thecommcraft.ktgeDemo
 
 import de.thecommcraft.ktge.*
-import org.openrndr.*
+import org.openrndr.KEY_ESCAPE
+import org.openrndr.KEY_SPACEBAR
 import org.openrndr.color.ColorRGBa
 import org.openrndr.math.Vector2
 
@@ -10,11 +11,11 @@ val cursor = sprite {
     costume(DrawerCostume {
         drawer.fill = color
         drawer.circle(mouse.position, 50.0)
-    },"mouseDown")
+    }, "mouseDown")
     costume(DrawerCostume {
         drawer.fill = color
         drawer.circle(mouse.position, 10.0)
-    },"mouseUp")
+    }, "mouseUp")
 
     init {
         costumeName = "mouseUp"
@@ -45,7 +46,15 @@ fun clickSprite(position: Vector2) = sprite {
 val global = sprite {
     on(keyboard.keyDown) {
         if (it.key == KEY_ESCAPE) exit()
+        if (it.key == KEY_SPACEBAR) testAudioGroup.playAudio("hit")
     }
+}
+
+val testAudioGroup: AudioGroup = audioGroup {
+    audio(
+        filePath = "data/sounds/hit.wav",
+        name = "hit"
+    )
 }
 
 fun main() = ktge(
