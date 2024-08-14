@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "de.thecommcraft"
 version = "1.0.0"
 
-val applicationMainClass = "de.thecommcraft.ktgeDemo.MainKt"
+val applicationMainClass = "de.thecommcraft.ktgeDemo.Main2Kt"
 
 /**  ## additional ORX features to be added to this project */
 val orxFeatures = setOf<String>(

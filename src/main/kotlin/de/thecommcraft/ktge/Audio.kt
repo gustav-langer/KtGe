@@ -28,10 +28,10 @@ class Audio(file: File) : AudioPlayable, AutoCloseable {
 }
 
 class AudioGroup(
-    val audios: List<Audio>,
+    val audios: List<AudioPlayable>,
     val audioNames: Map<String, Int> // TODO replace this and the corresponding construct for Sprite Costumes with a better data type
 ) {
-    fun selectAudio(audioName: String): Audio {
+    fun selectAudio(audioName: String): AudioPlayable {
         return audios[audioNames[audioName]!!]
     }
 
@@ -39,7 +39,7 @@ class AudioGroup(
         selectAudio(audioName).play()
     }
 
-    operator fun get(audioName: String): Audio {
+    operator fun get(audioName: String): AudioPlayable {
         return selectAudio(audioName)
     }
 }
