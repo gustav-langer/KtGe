@@ -6,16 +6,23 @@ import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
-typealias BuiltSprite = (KtgeApp) -> Sprite // TODO also find a name // there are 3 hard things in programming: off-by-one errors and naming things
+typealias BuiltSprite = (KtgeApp) -> Sprite // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
 
-class Sprite(
+open class SpriteState
+abstract class Drawable {
+    abstract fun draw(program: Program): Unit
+    abstract fun update(): Unit
+}
+
+open class Sprite(
     runOnce: List<BuildFun<Sprite>>,
-    val runEachFrame: List<BuildFun<Sprite>>,
+    private val runEachFrame: List<BuildFun<Sprite>>,
     val costumes: List<Pair<Costume, String?>> // Must be non-empty, this is ensured when using SpriteBuilder // TODO replace this with some sort of List<Costume> + BiMap<name, index>
-) {
+) : Drawable() {
     // Default values: the sprite is in the top left corner with its first costume selected
+    val spriteState : SpriteState = SpriteState()
     var position: Vector2 = Vector2.ZERO
-    var costumeIdx: Int = 0
+    public var costumeIdx: Int = 0
     var costumeName: String?
         get() = costumes[costumeIdx].second
         set(value) {
@@ -27,11 +34,11 @@ class Sprite(
         for (f in runOnce) f()
     }
 
-    fun update() {
+    override fun update() {
         for (f in runEachFrame) f()
     }
 
-    fun draw(program: Program) {
+    override fun draw(program: Program): Unit {
         costumes[costumeIdx].first.draw(program, position)
     }
 }
@@ -82,7 +89,7 @@ fun ktge(
 ) = application {
     configure(config)
     program {
-        val spritesActual: MutableList<Sprite> = mutableListOf() // TODO name
+        val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
         val appImpl = object : KtgeApp, InputEvents by this, Clock by this {
             override var width: Int = this@program.width
             override var height: Int = this@program.height
