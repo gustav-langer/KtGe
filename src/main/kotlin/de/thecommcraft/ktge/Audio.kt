@@ -35,7 +35,7 @@ class Audio(file: File) : AudioPlayable, AutoCloseable {
 
 class AudioGroup(
     val audios: List<AudioPlayable>,
-    val audioNames: Map<String, Int> // TODO replace this and the corresponding construct for Sprite Costumes with a better data type
+    val audioNames: Map<String, Int> // TODO replace this with a NamedList
 ) : AudioPlayable {
     private var selected: String? = null
 
