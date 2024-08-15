@@ -4,25 +4,28 @@ import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
+import kotlin.random.Random
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias BuiltSprite = (KtgeApp) -> Sprite // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
+typealias CostumeList = NamedList<Costume, String>
+typealias MutableCostumeList = MutableNamedList<Costume, String>
 
 open class SpriteState
 abstract class Drawable {
-    abstract fun draw(program: Program): Unit
-    abstract fun update(): Unit
+    abstract fun draw(program: Program)
+    abstract fun update()
 }
 
 open class Sprite(
     runOnce: List<BuildFun<Sprite>>,
     private val runEachFrame: List<BuildFun<Sprite>>,
-    val costumes: NamedList<Costume, String> // Must be non-empty, this is ensured when using SpriteBuilder
+    val costumes: CostumeList // Must be non-empty, this is ensured when using SpriteBuilder
 ) : Drawable() {
     // Default values: the sprite is in the top left corner with its first costume selected
     val spriteState : SpriteState = SpriteState()
     var position: Vector2 = Vector2.ZERO
-    public var costumeIdx: Int = 0
+    var costumeIdx: Int = 0
     var costumeName: String?
         get() = costumes.nameOf(costumeIdx)
         set(value) {
@@ -41,20 +44,22 @@ open class Sprite(
         for (f in runEachFrame) f()
     }
 
-    fun draw(program: Program) {
-        costumes[costumeIdx].first.draw(program, position)
+    override fun draw(program: Program) {
+        costumes[costumeIdx].draw(program, position)
     }
 }
 
 class SpriteBuilder(app: KtgeApp) : KtgeApp by app {
-    private val costumes: MutableNamedList<Costume, String> = emptyMutableNamedList()
+    private val costumes: MutableCostumeList = emptyMutableNamedList()
 
     private val runOnce: MutableList<BuildFun<Sprite>> = mutableListOf()
     private val runEachFrame: MutableList<BuildFun<Sprite>> = mutableListOf()
 
     private val eventListeners: MutableList<BuildFun<Sprite>> = mutableListOf()
 
-    fun costume(c: Costume, name: String? = null) = costumes.addNullable(c, name)
+    fun costume(c: Costume, name: String? = null) {
+        costumes.add(c, name ?: Random.nextInt(16777216).toString())
+    }
 
     fun init(code: Sprite.() -> Unit) = runOnce.add(code)
 
