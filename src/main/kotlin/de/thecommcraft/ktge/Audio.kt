@@ -19,6 +19,7 @@ class Audio(file: File) : AudioPlayable, AutoCloseable {
     }
 
     override fun play() {
+        _audioClip.stop()
         _audioClip.framePosition = 0
         _audioClip.start()
     }
