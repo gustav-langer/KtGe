@@ -17,17 +17,20 @@ abstract class Drawable {
 open class Sprite(
     runOnce: List<BuildFun<Sprite>>,
     private val runEachFrame: List<BuildFun<Sprite>>,
-    val costumes: List<Pair<Costume, String?>> // Must be non-empty, this is ensured when using SpriteBuilder // TODO replace this with some sort of List<Costume> + BiMap<name, index>
+    val costumes: NamedList<Costume, String> // Must be non-empty, this is ensured when using SpriteBuilder
 ) : Drawable() {
     // Default values: the sprite is in the top left corner with its first costume selected
     val spriteState : SpriteState = SpriteState()
     var position: Vector2 = Vector2.ZERO
     public var costumeIdx: Int = 0
     var costumeName: String?
-        get() = costumes[costumeIdx].second
+        get() = costumes.nameOf(costumeIdx)
         set(value) {
-            val idx = costumes.indexOfFirst { it.second == value }
-            if (value != null && idx != -1) costumeIdx = idx
+            value?.let {
+                costumes.indexOfName(value)?.let {
+                    costumeIdx = it
+                }
+            }
         }
 
     init {
@@ -38,20 +41,20 @@ open class Sprite(
         for (f in runEachFrame) f()
     }
 
-    override fun draw(program: Program): Unit {
+    fun draw(program: Program) {
         costumes[costumeIdx].first.draw(program, position)
     }
 }
 
 class SpriteBuilder(app: KtgeApp) : KtgeApp by app {
-    private val costumes: MutableList<Pair<Costume, String?>> = mutableListOf()
+    private val costumes: MutableNamedList<Costume, String> = emptyMutableNamedList()
 
     private val runOnce: MutableList<BuildFun<Sprite>> = mutableListOf()
     private val runEachFrame: MutableList<BuildFun<Sprite>> = mutableListOf()
 
     private val eventListeners: MutableList<BuildFun<Sprite>> = mutableListOf()
 
-    fun costume(c: Costume, name: String? = null) = costumes.add(c to name)
+    fun costume(c: Costume, name: String? = null) = costumes.addNullable(c, name)
 
     fun init(code: Sprite.() -> Unit) = runOnce.add(code)
 
@@ -62,8 +65,8 @@ class SpriteBuilder(app: KtgeApp) : KtgeApp by app {
     }
 
     fun build(): Sprite {
-        val costumesNonEmpty = if (costumes.size > 0) costumes else listOf(EmptyCostume to null)
-        val sprite = Sprite(runOnce, runEachFrame, costumesNonEmpty)
+        if (costumes.size == 0) costumes.add(EmptyCostume)
+        val sprite = Sprite(runOnce, runEachFrame, costumes)
         for (registerEvent in eventListeners) sprite.registerEvent()
         return sprite
     }

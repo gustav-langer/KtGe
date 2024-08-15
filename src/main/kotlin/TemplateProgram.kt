@@ -21,7 +21,11 @@ fun main() = application {
             drawer.image(image)
 
             drawer.fill = ColorRGBa.PINK
-            drawer.circle(cos(seconds) * width / 2.0 + width / 2.0, sin(0.5 * seconds) * height / 2.0 + height / 2.0, 140.0)
+            drawer.circle(
+                cos(seconds) * width / 2.0 + width / 2.0,
+                sin(0.5 * seconds) * height / 2.0 + height / 2.0,
+                140.0
+            )
 
             drawer.fontMap = font
             drawer.fill = ColorRGBa.WHITE

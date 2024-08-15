@@ -47,14 +47,24 @@ val global = sprite {
     on(keyboard.keyDown) {
         if (it.key == KEY_ESCAPE) exit()
         if (it.key == KEY_SPACEBAR) testAudioGroup.playAudio("hit")
+        if (it.name == "q") testAudioGroup2.playAudio("hit")
+        if (it.name == "a") testAudioGroup2.playAudio("group")
     }
 }
 
 val testAudioGroup: AudioGroup = audioGroup {
-    audio(
+    audioFile(
         filePath = "data/sounds/hit.wav",
         name = "hit"
     )
+}
+
+val testAudioGroup2: AudioGroup = audioGroup {
+    audioFile(
+        filePath = "data/sounds/hit.wav",
+        name = "hit"
+    )
+    audio(testAudioGroup, name="group")
 }
 
 fun main() = ktge(

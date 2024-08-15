@@ -113,6 +113,7 @@ dependencies {
 //    implementation(libs.jsoup)
 //    implementation(libs.gson)
 //    implementation(libs.csv)
+    implementation("io.michaelrocks.bimap:bimap:1.1.0")
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
