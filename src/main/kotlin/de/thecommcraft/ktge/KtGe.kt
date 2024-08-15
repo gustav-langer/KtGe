@@ -2,9 +2,6 @@ package de.thecommcraft.ktge
 
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.ColorBuffer
-import org.openrndr.draw.Drawer
-import org.openrndr.draw.FontMap
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 
@@ -69,35 +66,6 @@ fun sprite(init: BuildFun<SpriteBuilder>): BuiltSprite = fun(app: KtgeApp): Spri
     val builder = SpriteBuilder(app)
     builder.init()
     return builder.build()
-}
-
-interface Costume {
-    fun draw(program: Program, position: Vector2)
-}
-
-class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
-    override fun draw(program: Program, position: Vector2) {
-        program.code(position)
-    }
-}
-
-class ImageCostume(val img: ColorBuffer, val drawerConfig: BuildFun<Drawer>) : Costume {
-    override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig() // TODO find a good name for this
-        drawer.image(img, position)
-    }
-}
-
-class TextCostume(val text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
-    override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig()
-        drawer.fontMap = font
-        drawer.text(text, position)
-    }
-}
-
-object EmptyCostume : Costume {
-    override fun draw(program: Program, position: Vector2) {}
 }
 
 interface KtgeApp : InputEvents, Clock {
