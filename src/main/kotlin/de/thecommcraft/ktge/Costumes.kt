@@ -17,10 +17,10 @@ class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
     }
 }
 
-class ImageCostume(_img: ColorBuffer, val drawerConfig: BuildFun<Drawer>, scale: Int = 1, scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST) : Costume {
-    val img = colorBuffer((_img.width * scale).toInt(), (_img.height * scale).toInt())
+class ImageCostume(img: ColorBuffer, val drawerConfig: BuildFun<Drawer> = {}, scale: Int = 1, scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST) : Costume {
+    val img = colorBuffer(img.width * scale, img.height * scale)
     init {
-        _img.copyTo(img, sourceRectangle = IntRectangle(0,0,_img.width,_img.height), targetRectangle = IntRectangle(0,0,_img.width * scale, _img.height * scale), filter=scaleType)
+        img.copyTo(img, sourceRectangle = IntRectangle(0,0,img.width,img.height), targetRectangle = IntRectangle(0,0,img.width * scale, img.height * scale), filter=scaleType)
     }
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig() // TODO find a good name for this
