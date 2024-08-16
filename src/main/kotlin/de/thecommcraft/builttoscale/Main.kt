@@ -5,7 +5,40 @@ import de.thecommcraft.ktge.Sprite
 import de.thecommcraft.ktge.ktge
 import de.thecommcraft.ktge.sprite
 import org.openrndr.color.ColorRGBa
+import org.openrndr.extra.color.presets.DARK_GREEN
 import org.openrndr.math.Vector2
+import org.openrndr.shape.Rectangle
+
+val window = sprite {
+    val color = ColorRGBa.DARK_GREEN
+    val barHeight = 37.0 // pixels
+
+    val bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
+    var dragPosition: Vector2? = null
+
+    costume(DrawerCostume {
+        drawer.fill = color
+        drawer.stroke = null
+        drawer.rectangle(bar)
+
+        drawer.fill = null
+        drawer.stroke = color
+        drawer.rectangle(Vector2.ZERO, width.toDouble(), height.toDouble())
+    })
+
+    on(mouse.buttonDown) {
+        if (bar.contains(it.position)) dragPosition = it.position
+    }
+    on(mouse.buttonUp) {
+        if (bar.contains(it.position)) dragPosition = null
+    }
+
+    frame {
+        dragPosition?.let { pos ->
+            window.position += mouse.position - pos
+        }
+    }
+}
 
 val ball = sprite {
     val gravity = 0.2
@@ -45,8 +78,8 @@ val ball = sprite {
 }
 
 fun main() = ktge(
-    sprites = listOf(ball),
+    sprites = listOf(ball, window),
     config = {
-        windowResizable = true
+        hideWindowDecorations = true
     }
 )
