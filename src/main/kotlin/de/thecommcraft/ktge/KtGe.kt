@@ -11,6 +11,11 @@ typealias BuiltSprite = (KtgeApp) -> Drawable // TODO also find a name // there 
 typealias CostumeList = NamedList<Costume, String>
 typealias MutableCostumeList = MutableNamedList<Costume, String>
 
+interface Drawable {
+    fun draw(program: Program)
+    fun update()
+}
+
 open class SpriteState
 abstract class Drawable {
     abstract fun draw(program: Program)
@@ -21,9 +26,9 @@ open class Sprite(
     runOnce: List<BuildFun<Sprite>>,
     private val runEachFrame: List<BuildFun<Sprite>>,
     val costumes: CostumeList // Must be non-empty, this is ensured when using SpriteBuilder
-) : Drawable() {
+) : Drawable {
     // Default values: the sprite is in the top left corner with its first costume selected
-    val spriteState : SpriteState = SpriteState()
+    val spriteState: SpriteState = SpriteState()
     var position: Vector2 = Vector2.ZERO
     var costumeIdx: Int = 0
     var costumeName: String?
