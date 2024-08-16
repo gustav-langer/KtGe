@@ -45,7 +45,7 @@ fun clickSprite(position: Vector2) = sprite {
 
 val global = sprite {
     on(keyboard.keyDown) {
-        if (it.key == KEY_ESCAPE) exit()
+        if (it.key == KEY_ESCAPE) application.exit()
         if (it.key == KEY_SPACEBAR) testAudioGroup.playAudio("hit")
         if (it.name == "q") testAudioGroup2.playAudio("hit")
         if (it.name == "a") testAudioGroup2.playAudio("group")
