@@ -1,12 +1,11 @@
 package de.thecommcraft.ktge
 
-import org.openrndr.Configuration
-import org.openrndr.Program
-import org.openrndr.application
+import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import kotlin.random.Random
+import kotlinx.coroutines.delay
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias BuiltSprite = (KtgeApp) -> Drawable // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
@@ -92,10 +91,13 @@ interface KtgeApp : Program {
 
 // Main
 fun ktge(
-    sprites: List<BuiltSprite>, config: BuildFun<Configuration> = {}, background: ColorRGBa? = ColorRGBa.BLACK
+    sprites: List<BuiltSprite>, config: BuildFun<Configuration> = {}, background: ColorRGBa? = ColorRGBa.BLACK, frameRate: Long = 60L
 ) = application {
     configure(config)
     program {
+        window.presentationMode = PresentationMode.MANUAL
+        var lastTime = seconds
+
         val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
         val appImpl = object : KtgeApp, Program by this {
             override fun createSprite(sprite: BuiltSprite) {
@@ -107,6 +109,16 @@ fun ktge(
 
         backgroundColor = background
         extend {
+            launch {
+                val t = 1000.0 / frameRate
+                val t0 = seconds - lastTime
+                lastTime = seconds
+                val d = (t - t0 * 1000).toLong() // in millis
+
+                if (d > 0L) delay(d)
+
+                window.requestDraw()
+            }
             for (spr in spritesActual) {
                 spr.update()
                 spr.draw(this)
