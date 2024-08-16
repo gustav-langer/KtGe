@@ -7,7 +7,7 @@ import org.openrndr.math.Vector2
 import kotlin.random.Random
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
-typealias BuiltSprite = (KtgeApp) -> Sprite // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
+typealias BuiltSprite = (KtgeApp) -> Drawable // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
 typealias CostumeList = NamedList<Costume, String>
 typealias MutableCostumeList = MutableNamedList<Costume, String>
 
@@ -86,6 +86,7 @@ fun sprite(init: BuildFun<SpriteBuilder>): BuiltSprite = fun(app: KtgeApp): Spri
 interface KtgeApp : InputEvents, Clock {
     var width: Int
     var height: Int
+    val program: Program
 
     fun createSprite(sprite: BuiltSprite)
     fun exit()
@@ -101,6 +102,7 @@ fun ktge(
         val appImpl = object : KtgeApp, InputEvents by this, Clock by this {
             override var width: Int = this@program.width
             override var height: Int = this@program.height
+            override val program: Program = this@program
 
             override fun createSprite(sprite: BuiltSprite) {
                 spritesActual.add(sprite(this))

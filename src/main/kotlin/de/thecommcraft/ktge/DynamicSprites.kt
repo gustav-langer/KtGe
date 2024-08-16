@@ -1,10 +1,11 @@
 package de.thecommcraft.ktge
 
 import org.openrndr.Program
+import org.openrndr.draw.ResizableRenderTarget
 import org.openrndr.math.Vector2
-import org.openrndr.draw.RenderTarget
+import org.openrndr.draw.resizableRenderTarget
 import org.openrndr.events.Event
-import org.openrndr.draw.renderTarget as rT
+import org.openrndr.draw.resizableRenderTarget as rT
 import kotlin.random.Random
 
 open class DynamicSprite<T: DynamicSpriteState>(
@@ -18,7 +19,7 @@ open class DynamicSprite<T: DynamicSpriteState>(
     }
 
     override fun draw(program: Program): Unit {
-        costumes[costumeIdx].draw(program, position)
+        parent.getDynamicSpriteState(spriteId).draw(program)
     }
 }
 
@@ -26,6 +27,7 @@ abstract class DynamicSpriteState (val spriteId: Int, open val parent: DynamicSp
     val costumeData: CostumeData = CostumeData(costumes, costumeIdx)
     abstract fun getSpriteState(): SpriteState
     abstract fun getPosition(): Vector2
+    abstract fun draw(program: Program): Unit
 }
 
 class CostumeData(var costumes: CostumeList, var costumeIdx: Int = 0)
@@ -59,7 +61,7 @@ class TileState(spriteId: Int, override val parent: TileGrid, costumes: CostumeL
     var tileX: Int? = null
     var tileY: Int? = null
     var tileType: Int?
-        get() = parent.tiles[tileX!!][tileY!!]
+        get() = parent.tiles.getOrNull(tileX!!)?.getOrNull(tileY!!)
         set(value) {parent.tiles[tileX!!][tileY!!] = value}
     var costumeIdx: Int = 0
     var costumeName: String?
@@ -81,13 +83,17 @@ class TileState(spriteId: Int, override val parent: TileGrid, costumes: CostumeL
     }
 
     fun drawToParent(program: Program) {
-        program.drawer.withTarget(parent.renderTarget) {
+        program.drawer.withTarget(parent.renderTarget.renderTarget) {
             costumeName?.let { (costumeData.costumes[it]?.draw(program, getPosition())) }
         }
     }
 
     fun determineCostumes(): Unit {
         costumeData.costumes = parent.tileTypeCostumes(tileType) ?: MapMutableNamedList(mutableListOf(EmptyCostume), listOf(Random.nextInt(16777216).toString()))
+    }
+
+    override fun draw(program: Program) {
+        drawToParent(program)
     }
 }
 
@@ -96,22 +102,24 @@ open class TileGrid(
     val height: Int,
     val tileSize: Int,
     val costumes: Map<Int, MutableCostumeList>,
-    val tiles: MutableList<MutableList<Int?>> = mutableListOf(),
+    tiles: MutableList<MutableList<Int?>> = mutableListOf(),
     runOnce: MutableList<BuildFun<TileGrid>> = mutableListOf(),
     val runEachFrame: MutableList<BuildFun<TileGrid>> = mutableListOf(),
+    val app: KtgeApp,
 ) : DynamicSpriteGroup<TileState>() {
+    val tiles: MutableList<MutableList<Int?>> = ((0..<width).map { i: Int -> ((0..<height).map {j: Int -> tiles.getOrNull(i)?.getOrNull(j)}).toMutableList() }).toMutableList()
     var position: Vector2 = Vector2.ZERO
     val totalWidth: Int = width * tileSize
     val totalHeight: Int = height * tileSize
-    val renderTarget: RenderTarget = rT(totalWidth, totalHeight) {
+    val renderTarget: ResizableRenderTarget = rT(totalWidth, totalHeight, 1.0) {
         colorBuffer()
     }
     var drawn: Boolean = false
-    val spriteIds: MutableList<MutableList<Int?>> = tiles.toMutableList()
+    val spriteIds: MutableList<MutableList<Int>> = ((0..<width).map { i: Int -> ((0..<height).map {j: Int -> 0}).toMutableList() }).toMutableList()
 
     init {
-        for (i: Int in 0..width) {
-            for (j: Int in 0..height) {
+        for (i: Int in 0..<width) {
+            for (j: Int in 0..<height) {
                 val spriteId: Int = Random.nextInt()
                 val sprite = addSprite(spriteId) {
                     tileX = i
@@ -123,7 +131,7 @@ open class TileGrid(
         for (f in runOnce) f()
     }
     fun getSpriteId(tileX: Int, tileY: Int): Int {
-        return spriteIds[tileX][tileY]!!
+        return spriteIds[tileX][tileY]
     }
     override fun getDynamicSpriteState(spriteId: Int): TileState {
         return dynamicSpriteStates[spriteId]!!
@@ -150,14 +158,14 @@ open class TileGrid(
     }
     override fun draw(program: Program): Unit {
         if (!drawn) {
-            for (i: Int in 0..width) {
-                for (j: Int in 0..height) {
-
+            for (i: Int in 0..<width) {
+                for (j: Int in 0..<height) {
+                    getSprite(getSpriteId(i, j)).draw(program)
                 }
             }
             drawn = true
         }
-        program.drawer.image(renderTarget.colorBuffer(0), position)
+        program.drawer.image(renderTarget.renderTarget.colorBuffer(0), position)
     }
 }
 
@@ -166,10 +174,10 @@ class TileTypeCostumeBuilder {
     fun costume(c: Costume, name: String? = null) = costumes.add(c, name ?: Random.nextInt(16777216).toString())
 }
 
-class TileGridBuilder(app: KtgeApp) : KtgeApp by app {
-    private var gridWidth: Int? = null
-    private var gridHeight: Int? = null
-    private var tileSize: Int? = null
+class TileGridBuilder(val app: KtgeApp) : KtgeApp by app {
+    var gridWidth: Int? = null
+    var gridHeight: Int? = null
+    var tileSize: Int? = null
 
     private val costumes: MutableMap<Int, CostumeList> = mutableMapOf()
 
@@ -193,8 +201,14 @@ class TileGridBuilder(app: KtgeApp) : KtgeApp by app {
     }
 
     fun build(): TileGrid {
-        val tileGrid = TileGrid(gridWidth!!, gridHeight!!, tileSize!!, costumes.toMap().mapValues { it.value.toMutable() }, mutableListOf(), runOnce, runEachFrame)
+        val tileGrid = TileGrid(gridWidth!!, gridHeight!!, tileSize!!, costumes.toMap().mapValues { it.value.toMutable() }, mutableListOf(), runOnce, runEachFrame, app)
         for (registerEvent in eventListeners) tileGrid.registerEvent()
         return tileGrid
     }
+}
+
+fun tileGrid(init: BuildFun<TileGridBuilder>): BuiltSprite = fun(app: KtgeApp): TileGrid {
+    val builder = TileGridBuilder(app)
+    builder.init()
+    return builder.build()
 }
