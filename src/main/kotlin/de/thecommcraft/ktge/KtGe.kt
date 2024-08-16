@@ -1,6 +1,8 @@
 package de.thecommcraft.ktge
 
-import org.openrndr.*
+import org.openrndr.Configuration
+import org.openrndr.Program
+import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
@@ -17,10 +19,6 @@ interface Drawable {
 }
 
 open class SpriteState
-abstract class Drawable {
-    abstract fun draw(program: Program)
-    abstract fun update()
-}
 
 open class Sprite(
     runOnce: List<BuildFun<Sprite>>,
@@ -88,13 +86,8 @@ fun sprite(init: BuildFun<SpriteBuilder>): BuiltSprite = fun(app: KtgeApp): Spri
     return builder.build()
 }
 
-interface KtgeApp : InputEvents, Clock {
-    var width: Int
-    var height: Int
-    val program: Program
-
+interface KtgeApp : Program {
     fun createSprite(sprite: BuiltSprite)
-    fun exit()
 }
 
 // Main
@@ -104,17 +97,9 @@ fun ktge(
     configure(config)
     program {
         val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
-        val appImpl = object : KtgeApp, InputEvents by this, Clock by this {
-            override var width: Int = this@program.width
-            override var height: Int = this@program.height
-            override val program: Program = this@program
-
+        val appImpl = object : KtgeApp, Program by this {
             override fun createSprite(sprite: BuiltSprite) {
                 spritesActual.add(sprite(this))
-            }
-
-            override fun exit() {
-                application.exit()
             }
         }
 
