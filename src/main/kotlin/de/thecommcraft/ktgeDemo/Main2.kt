@@ -64,7 +64,7 @@ val testAudioGroup2: AudioGroup = audioGroup {
         filePath = "data/sounds/hit.wav",
         name = "hit"
     )
-    audio(testAudioGroup, name="group")
+    audio(testAudioGroup, name = "group")
 }
 
 fun main() = ktge(

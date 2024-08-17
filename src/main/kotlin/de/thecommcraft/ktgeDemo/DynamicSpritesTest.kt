@@ -1,12 +1,8 @@
-
-
 import de.thecommcraft.ktge.*
 import org.openrndr.KEY_ESCAPE
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.MagnifyingFilter
 import org.openrndr.draw.loadImage
-import org.openrndr.draw.tint
 import org.openrndr.math.Vector2
 import kotlin.random.Random
 
@@ -68,23 +64,27 @@ val testAudioGroup2: AudioGroup = audioGroup {
         filePath = "data/sounds/hit.wav",
         name = "hit"
     )
-    audio(testAudioGroup, name="group")
+    audio(testAudioGroup, name = "group")
 }
 
 val tileGridTest = tileGrid {
     tileType(0) {
-        costume(ImageCostume(
-            loadImage("data/images/tile0.png"),
-            drawerConfig = {},
-            4
-        ), "tile0")
+        costume(
+            ImageCostume(
+                loadImage("data/images/tile0.png"),
+                drawerConfig = {},
+                4
+            ), "tile0"
+        )
     }
     tileType(1) {
-        costume(ImageCostume(
-            loadImage("data/images/tile1.png"),
-            drawerConfig = {},
-            4
-        ), "tile1")
+        costume(
+            ImageCostume(
+                loadImage("data/images/tile1.png"),
+                drawerConfig = {},
+                4
+            ), "tile1"
+        )
     }
     tileSize = 64
     gridWidth = 10

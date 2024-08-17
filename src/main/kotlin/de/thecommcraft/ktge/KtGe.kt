@@ -6,7 +6,6 @@ import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
-import kotlin.random.Random
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias BuiltSprite = (KtgeApp) -> Drawable // TODO also find a name // there are 2 hard things in programming: cache-invalidation, off-by-one errors and naming things
