@@ -96,10 +96,8 @@ class TileState(spriteId: Int, override val parent: TileGrid, costumes: CostumeL
     }
 
     fun determineCostumes() {
-        costumeData.costumes = parent.tileTypeCostumes(tileType) ?: MapMutableNamedList(
-            mutableListOf(EmptyCostume),
-            listOf(Random.nextInt(16777216).toString())
-        )
+        costumeData.costumes =
+            parent.tileTypeCostumes(tileType) ?: MapNamedList(listOf(EmptyCostume), listOf())
     }
 
     override fun draw(program: Program) {
@@ -167,7 +165,7 @@ open class TileGrid(
     }
 
     override fun newSpriteState(spriteId: Int, init: BuildFun<TileState>): TileState {
-        val spriteState = TileState(spriteId, this, MapNamedList(listOf(), listOf()))
+        val spriteState = TileState(spriteId, this, emptyNamedList())
         spriteState.init()
         spriteState.tileX!!
         spriteState.tileY!!

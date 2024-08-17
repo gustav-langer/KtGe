@@ -61,7 +61,7 @@ class SpriteBuilder(app: KtgeApp) : KtgeApp by app {
     private val eventListeners: MutableList<BuildFun<Sprite>> = mutableListOf()
 
     fun costume(c: Costume, name: String? = null) {
-        costumes.add(c, name ?: Random.nextInt(16777216).toString())
+        costumes.addNullable(c, name)
     }
 
     fun init(code: Sprite.() -> Unit) = runOnce.add(code)
@@ -73,7 +73,7 @@ class SpriteBuilder(app: KtgeApp) : KtgeApp by app {
     }
 
     fun build(): Sprite {
-        if (costumes.size == 0) costumes.add(EmptyCostume)
+        if (costumes.isEmpty()) costumes.add(EmptyCostume)
         val sprite = Sprite(runOnce, runEachFrame, costumes)
         for (registerEvent in eventListeners) sprite.registerEvent()
         return sprite
