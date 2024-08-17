@@ -6,7 +6,7 @@ import org.openrndr.draw.loadImage
 import org.openrndr.math.Vector2
 import kotlin.random.Random
 
-val cursor = sprite {
+/*val cursor = sprite {
     val color = ColorRGBa.WHITE
     costume(DrawerCostume {
         drawer.fill = color
@@ -107,4 +107,4 @@ fun main() = ktge(
         title = "KtGe Demo"
         hideCursor = true
     }
-)
+)*/

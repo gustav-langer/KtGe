@@ -21,11 +21,11 @@ class ImageCostume(
     scale: Int = 1,
     scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
 ) : Costume {
-    val img = colorBuffer(img.width * scale, img.height * scale)
+    val buf = colorBuffer(img.width * scale, img.height * scale)
 
     init {
         img.copyTo(
-            img,
+            buf,
             sourceRectangle = IntRectangle(0, 0, img.width, img.height),
             targetRectangle = IntRectangle(0, 0, img.width * scale, img.height * scale),
             filter = scaleType
@@ -34,7 +34,7 @@ class ImageCostume(
 
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig() // TODO find a good name for this
-        drawer.image(img, position)
+        drawer.image(buf, position)
     }
 }
 
