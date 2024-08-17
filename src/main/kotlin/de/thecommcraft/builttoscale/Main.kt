@@ -170,7 +170,7 @@ val ball = sprite {
         if (belowGround < 0) {
             vel = vel.copy(y = vel.y + gravity)
         } else {
-            vel = vel.copy(y = -1.2 * belowGround) //position = position.copy(y = wind.size.y - size)
+            vel = vel.copy(y = -1.5 * belowGround) //position = position.copy(y = wind.size.y - size)
         }
         val leftEdge = position.x - size - window.position.x
         val inLeftWall = leftEdge
