@@ -6,7 +6,6 @@ import de.thecommcraft.ktge.ktge
 import de.thecommcraft.ktge.sprite
 import org.openrndr.color.ColorRGBa
 import org.openrndr.extra.color.presets.DARK_GREEN
-import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 import org.w3c.dom.css.Rect
@@ -20,18 +19,30 @@ enum class DragType {
     NONE,
 }
 
+val barHeight = 37.0 // pixels
+val arrowHeight = 15.0 // pixels
+
 val window = sprite {
-
-
-
     val color = ColorRGBa.DARK_GREEN
-    val barHeight = 37.0 // pixels
 
-    var bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
-    var leftArrow = Rectangle(corner = Vector2(0.0, height.toDouble() / 2 - 16), 32.0, 32.0)
-    var rightArrow = Rectangle(corner = Vector2(width.toDouble() - 32, height.toDouble() / 2 - 16), 32.0, 32.0)
-    var downArrow = Rectangle(corner = Vector2(width.toDouble() / 2 - 16, height.toDouble() - 32), 32.0, 32.0)
-    var cornerArrow = Rectangle(corner = Vector2(width.toDouble() - 32, height.toDouble() - 32), 32.0, 32.0)
+    var bar: Rectangle = Rectangle.EMPTY
+    var rightArrow: Rectangle = Rectangle.EMPTY
+    var downArrow: Rectangle = Rectangle.EMPTY
+    var cornerArrow: Rectangle = Rectangle.EMPTY
+
+    fun setUIElements() {
+        bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
+        rightArrow = Rectangle(corner = Vector2(width.toDouble() - arrowHeight, barHeight), arrowHeight, height-arrowHeight)
+        downArrow = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width-arrowHeight, arrowHeight)
+        cornerArrow = Rectangle(
+            corner = Vector2(width.toDouble() - arrowHeight, height.toDouble() - arrowHeight),
+            arrowHeight,
+            arrowHeight
+        )
+    }
+
+    setUIElements()
+
     var dragPosition: Vector2? = null
     var dragType: DragType = DragType.NONE
     var dragSize: Vector2? = null
@@ -40,11 +51,7 @@ val window = sprite {
 
     fun internalResizeWindow(newWidth: Int, newHeight: Int) {
         window.size = Vector2(newWidth.toDouble(), newHeight.toDouble())
-        bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
-        leftArrow = Rectangle(corner = Vector2(0.0, height.toDouble() / 2 - 16), 32.0, 32.0)
-        rightArrow = Rectangle(corner = Vector2(width.toDouble() - 32, height.toDouble() / 2 - 16), 32.0, 32.0)
-        downArrow = Rectangle(corner = Vector2(width.toDouble() / 2 - 16, height.toDouble() - 32), 32.0, 32.0)
-        cornerArrow = Rectangle(corner = Vector2(width.toDouble() - 32, height.toDouble() - 32), 32.0, 32.0)
+        setUIElements()
     }
 
     fun resizeWindow() {
@@ -56,17 +63,8 @@ val window = sprite {
         drawer.fill = color
         drawer.stroke = null
         drawer.rectangle(bar)
-
-        drawer.fill = color
-        drawer.stroke = null
         drawer.rectangle(rightArrow)
-
-        drawer.fill = color
-        drawer.stroke = null
         drawer.rectangle(downArrow)
-
-        drawer.fill = color
-        drawer.stroke = null
         drawer.rectangle(cornerArrow)
 
         drawer.fill = null
@@ -112,14 +110,7 @@ val window = sprite {
                     windowRect = windowRect.copy(corner = window.position + mouse.position - pos)
                     resizeWindow()
                 }
-//                DragType.RESIZE_LEFT -> {
-//                    var newPos = window.position.x + mouse.position.x - pos.x
-//                    if (windowRect.width + windowRect.x - newPos < 128) {
-//                        newPos = windowRect.width + windowRect.x - 128
-//                    }
-//                    windowRect = Rectangle(x = newPos, y = windowRect.y, width = windowRect.width + windowRect.x - newPos, height = windowRect.height)
-//                    resizeWindow()
-//                }
+
                 DragType.RESIZE_RIGHT -> {
                     dragSize?.let { size ->
                         var newSize = size.x + mouse.position.x - pos.x
@@ -130,6 +121,7 @@ val window = sprite {
                         resizeWindow()
                     }
                 }
+
                 DragType.RESIZE_DOWN -> {
                     dragSize?.let { size ->
                         var newSize = size.y + mouse.position.y - pos.y
@@ -140,6 +132,7 @@ val window = sprite {
                         resizeWindow()
                     }
                 }
+
                 DragType.RESIZE_CORNER -> {
                     dragSize?.let { size ->
                         var newSize = size + mouse.position - pos
@@ -153,6 +146,7 @@ val window = sprite {
                         resizeWindow()
                     }
                 }
+
                 else -> {}
             }
         }
@@ -167,7 +161,7 @@ val ball = sprite {
 
     fun Sprite.updateVelocity() {
         val bottomEdge = position.y + size - window.position.y
-        val belowGround = bottomEdge - window.size.y + 32
+        val belowGround = bottomEdge - window.size.y + arrowHeight
         if (belowGround < 0) {
             vel = vel.copy(y = vel.y + gravity)
         } else {
