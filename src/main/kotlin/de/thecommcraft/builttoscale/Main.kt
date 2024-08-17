@@ -10,6 +10,7 @@ import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 import org.w3c.dom.css.Rect
+import kotlin.math.abs
 
 enum class DragType {
     MOVE_WINDOW,
@@ -170,23 +171,26 @@ val ball = sprite {
         if (belowGround < 0) {
             vel = vel.copy(y = vel.y + gravity)
         } else {
-            vel = vel.copy(y = -1.5 * belowGround) //position = position.copy(y = wind.size.y - size)
+            vel = vel.copy(y = -0.5 * vel.y)
+            position = position.copy(y = position.y - belowGround)
         }
         val leftEdge = position.x - size - window.position.x
         val inLeftWall = leftEdge
         if (inLeftWall > 0) {
 
         } else {
-            vel = vel.copy(x = vel.x - inLeftWall)
-            //position = position.copy(y = window.size.y - size)
+            if (abs(vel.x) < abs(inLeftWall)) vel = vel.copy(x = vel.x + inLeftWall * 0.4)
+            vel = vel.copy(x = -0.8 * vel.x)
+            position = position.copy(x = position.x - inLeftWall)
         }
         val rightEdge = position.x + size - window.position.x
         val inRightWall = rightEdge - window.size.x
         if (inRightWall < 0) {
 
         } else {
-            vel = vel.copy(x = vel.x - inRightWall)
-            //position = position.copy(y = window.size.y - size)
+            if (abs(vel.x) < abs(inRightWall)) vel = vel.copy(x = vel.x + inRightWall * 0.4)
+            vel = vel.copy(x = -0.8 * vel.x)
+            position = position.copy(x = position.x - inRightWall)
         }
         vel = vel.copy(x = vel.x * 0.99)
     }
