@@ -4,6 +4,7 @@ import de.thecommcraft.ktge.DrawerCostume
 import de.thecommcraft.ktge.Sprite
 import de.thecommcraft.ktge.ktge
 import de.thecommcraft.ktge.sprite
+import org.openrndr.CursorType
 import org.openrndr.color.ColorRGBa
 import org.openrndr.extra.color.presets.DARK_GREEN
 import org.openrndr.math.Vector2
@@ -103,6 +104,14 @@ val window = sprite {
             DragType.RESIZE_CORNER -> windowRect.copy(width = newWidth, height = newHeight)
         }
         if (dragType != DragType.NONE) resizeWindow()
+    }
+
+    frame {
+        application.cursorType = when {
+            resizeRight.contains(mouse.position) -> CursorType.HRESIZE_CURSOR
+            resizeDown.contains(mouse.position) -> CursorType.VRESIZE_CURSOR
+            else -> CursorType.ARROW_CURSOR // TODO does the diagonal cursor type exist yet? if so, add it
+        }
     }
 }
 
