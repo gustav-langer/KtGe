@@ -25,7 +25,7 @@ val window = sprite {
     val minHeight = 128.0
 
     val doRandomColors = false
-    var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(107.0, 130.0, 255.0)
+    var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(0.42, 0.51,1.0)
 
     var bar: Rectangle = Rectangle.EMPTY
     var resizeRight: Rectangle = Rectangle.EMPTY
