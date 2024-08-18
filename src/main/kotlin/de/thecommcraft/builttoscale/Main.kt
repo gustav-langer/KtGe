@@ -22,18 +22,24 @@ const val arrowHeight = 15.0 // pixels
 
 val window = sprite {
     val color = ColorRGBa.DARK_GREEN
+    val minWidth = 128.0
+    val minHeight = 128.0
 
     var bar: Rectangle = Rectangle.EMPTY
-    var rightArrow: Rectangle = Rectangle.EMPTY
-    var downArrow: Rectangle = Rectangle.EMPTY
-    var cornerArrow: Rectangle = Rectangle.EMPTY
+    var resizeRight: Rectangle = Rectangle.EMPTY
+    var resizeDown: Rectangle = Rectangle.EMPTY
+    var resizeCorner: Rectangle = Rectangle.EMPTY
 
     fun setUIElements() {
         bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
-        rightArrow =
-            Rectangle(corner = Vector2(width.toDouble() - arrowHeight, barHeight), arrowHeight, height - arrowHeight)
-        downArrow = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width - arrowHeight, arrowHeight)
-        cornerArrow = Rectangle(
+        resizeRight =
+            Rectangle(
+                corner = Vector2(width.toDouble() - arrowHeight, barHeight),
+                arrowHeight,
+                height - barHeight - arrowHeight
+            )
+        resizeDown = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width - arrowHeight, arrowHeight)
+        resizeCorner = Rectangle(
             corner = Vector2(width.toDouble() - arrowHeight, height.toDouble() - arrowHeight),
             arrowHeight,
             arrowHeight
@@ -42,29 +48,26 @@ val window = sprite {
 
     setUIElements()
 
-    var dragPosition: Vector2? = null
     var dragType: DragType = DragType.NONE
-    var dragSize: Vector2? = null
+    var dragPosition: Vector2 = toGlobal(mouse.position) // Mouse position when drag started
+    var dragWindowPosition: Vector2 = window.position
+    var dragSize: Vector2 = window.size // Size of the window when drag started
 
     var windowRect = Rectangle(corner = window.position, window.size[0], window.size[1])
 
-    fun internalResizeWindow(newWidth: Int, newHeight: Int) {
-        window.size = Vector2(newWidth.toDouble(), newHeight.toDouble())
-        setUIElements()
-    }
-
     fun resizeWindow() {
         window.position = windowRect.corner
-        internalResizeWindow(windowRect.width.toInt(), windowRect.height.toInt())
+        window.size = windowRect.dimensions
+        setUIElements()
     }
 
     costume(DrawerCostume {
         drawer.fill = color
         drawer.stroke = null
         drawer.rectangle(bar)
-        drawer.rectangle(rightArrow)
-        drawer.rectangle(downArrow)
-        drawer.rectangle(cornerArrow)
+        drawer.rectangle(resizeRight)
+        drawer.rectangle(resizeDown)
+        drawer.rectangle(resizeCorner)
 
         drawer.fill = null
         drawer.stroke = color
@@ -72,83 +75,34 @@ val window = sprite {
     })
 
     on(mouse.buttonDown) {
-        if (bar.contains(it.position)) {
-            dragPosition = it.position
-            dragType = DragType.MOVE_WINDOW
-        }
-        if (rightArrow.contains(it.position)) {
-            dragPosition = it.position
-            dragSize = window.size
-            dragType = DragType.RESIZE_RIGHT
-        }
-        if (downArrow.contains(it.position)) {
-            dragPosition = it.position
-            dragSize = window.size
-            dragType = DragType.RESIZE_DOWN
-        }
-        if (cornerArrow.contains(it.position)) {
-            dragPosition = it.position
-            dragSize = window.size
-            dragType = DragType.RESIZE_CORNER
-        }
-        if (bar.contains(it.position)) {
-            dragPosition = it.position
-            dragType = DragType.MOVE_WINDOW
+        dragPosition = toGlobal(it.position)
+        dragWindowPosition = window.position
+        dragSize = window.size
+        dragType = when {
+            bar.contains(it.position) -> DragType.MOVE_WINDOW
+            resizeRight.contains(it.position) -> DragType.RESIZE_RIGHT
+            resizeDown.contains(it.position) -> DragType.RESIZE_DOWN
+            resizeCorner.contains(it.position) -> DragType.RESIZE_CORNER
+            else -> DragType.NONE
         }
     }
 
     on(mouse.buttonUp) {
         dragType = DragType.NONE
-        if (bar.contains(it.position)) dragPosition = null
     }
 
     frame {
-        dragPosition?.let { pos ->
-            when (dragType) {
-                DragType.MOVE_WINDOW -> {
-                    windowRect = windowRect.copy(corner = window.position + mouse.position - pos)
-                    resizeWindow()
-                }
-
-                DragType.RESIZE_RIGHT -> {
-                    dragSize?.let { size ->
-                        var newSize = size.x + mouse.position.x - pos.x
-                        if (newSize < 128) {
-                            newSize = 128.0
-                        }
-                        windowRect = Rectangle(corner = windowRect.corner, width = newSize, height = windowRect.height)
-                        resizeWindow()
-                    }
-                }
-
-                DragType.RESIZE_DOWN -> {
-                    dragSize?.let { size ->
-                        var newSize = size.y + mouse.position.y - pos.y
-                        if (newSize < 128) {
-                            newSize = 128.0
-                        }
-                        windowRect = Rectangle(corner = windowRect.corner, width = windowRect.width, height = newSize)
-                        resizeWindow()
-                    }
-                }
-
-                DragType.RESIZE_CORNER -> {
-                    dragSize?.let { size ->
-                        var newSize = size + mouse.position - pos
-                        if (newSize.x < 128) {
-                            newSize = newSize.copy(x = 128.0)
-                        }
-                        if (newSize.y < 128) {
-                            newSize = newSize.copy(y = 128.0)
-                        }
-                        windowRect = Rectangle(corner = windowRect.corner, width = newSize.x, height = newSize.y)
-                        resizeWindow()
-                    }
-                }
-
-                else -> {}
-            }
+        val mouseChange = toGlobal(mouse.position) - dragPosition
+        val newWidth = max(dragSize.x + mouseChange.x, minWidth)
+        val newHeight = max(dragSize.y + mouseChange.y, minHeight)
+        windowRect = when (dragType) {
+            DragType.NONE -> windowRect
+            DragType.MOVE_WINDOW -> windowRect.copy(corner = dragWindowPosition + mouseChange)
+            DragType.RESIZE_RIGHT -> windowRect.copy(width = newWidth)
+            DragType.RESIZE_DOWN -> windowRect.copy(height = newHeight)
+            DragType.RESIZE_CORNER -> windowRect.copy(width = newWidth, height = newHeight)
         }
+        if (dragType != DragType.NONE) resizeWindow()
     }
 }
 
