@@ -6,7 +6,6 @@ import de.thecommcraft.ktge.ktge
 import de.thecommcraft.ktge.sprite
 import org.openrndr.CursorType
 import org.openrndr.color.ColorRGBa
-import org.openrndr.extra.color.presets.DARK_GREEN
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 
@@ -22,9 +21,11 @@ const val barHeight = 37.0 // pixels
 const val arrowHeight = 15.0 // pixels
 
 val window = sprite {
-    val color = ColorRGBa.DARK_GREEN
     val minWidth = 128.0
     val minHeight = 128.0
+
+    val doRandomColors = false
+    var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(107.0, 130.0, 255.0)
 
     var bar: Rectangle = Rectangle.EMPTY
     var resizeRight: Rectangle = Rectangle.EMPTY
@@ -69,10 +70,6 @@ val window = sprite {
         drawer.rectangle(resizeRight)
         drawer.rectangle(resizeDown)
         drawer.rectangle(resizeCorner)
-
-        drawer.fill = null
-        drawer.stroke = color
-        drawer.rectangle(Vector2.ZERO, width.toDouble(), height.toDouble())
     })
 
     on(mouse.buttonDown) {
@@ -113,9 +110,15 @@ val window = sprite {
             else -> CursorType.ARROW_CURSOR // TODO does the diagonal cursor type exist yet? if so, add it
         }
     }
+
+    if (doRandomColors) frame {
+        if (frameCount % 300 == 0) color = randomColor()
+    }
 }
 
 val ball = sprite {
+    val color: ColorRGBa = ColorRGBa.CYAN
+
     val gravity = 0.2
     val bounceX = 0.5
     val bounceY = 0.5
@@ -128,7 +131,7 @@ val ball = sprite {
     // In this sprite, position is calculated globally, i.e. from the top left of the screen and not the window.
     // Use the Program.toGlobal() function whenever setting the position.
     costume(globalPos(DrawerCostume {
-        drawer.fill = ColorRGBa.CYAN
+        drawer.fill = color
         drawer.circle(it, size)
     }))
 
