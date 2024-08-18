@@ -57,9 +57,9 @@ val window = sprite {
     var windowRect = Rectangle(corner = window.position, window.size[0], window.size[1])
 
     fun resizeWindow() {
+        setUIElements()
         window.position = windowRect.corner
         window.size = windowRect.dimensions
-        setUIElements()
     }
 
     costume(DrawerCostume {
@@ -103,7 +103,7 @@ val window = sprite {
             DragType.RESIZE_DOWN -> windowRect.copy(height = newHeight)
             DragType.RESIZE_CORNER -> windowRect.copy(width = newWidth, height = newHeight)
         }
-        if (dragType != DragType.NONE) resizeWindow()
+        resizeWindow()
     }
 
     frame {
