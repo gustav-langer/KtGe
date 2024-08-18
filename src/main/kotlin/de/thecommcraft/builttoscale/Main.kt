@@ -8,8 +8,6 @@ import org.openrndr.color.ColorRGBa
 import org.openrndr.extra.color.presets.DARK_GREEN
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
-import org.w3c.dom.css.Rect
-import kotlin.math.abs
 
 enum class DragType {
     MOVE_WINDOW,
@@ -19,8 +17,8 @@ enum class DragType {
     NONE,
 }
 
-val barHeight = 37.0 // pixels
-val arrowHeight = 15.0 // pixels
+const val barHeight = 37.0 // pixels
+const val arrowHeight = 15.0 // pixels
 
 val window = sprite {
     val color = ColorRGBa.DARK_GREEN
@@ -32,8 +30,9 @@ val window = sprite {
 
     fun setUIElements() {
         bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
-        rightArrow = Rectangle(corner = Vector2(width.toDouble() - arrowHeight, barHeight), arrowHeight, height-arrowHeight)
-        downArrow = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width-arrowHeight, arrowHeight)
+        rightArrow =
+            Rectangle(corner = Vector2(width.toDouble() - arrowHeight, barHeight), arrowHeight, height - arrowHeight)
+        downArrow = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width - arrowHeight, arrowHeight)
         cornerArrow = Rectangle(
             corner = Vector2(width.toDouble() - arrowHeight, height.toDouble() - arrowHeight),
             arrowHeight,
@@ -155,47 +154,84 @@ val window = sprite {
 
 val ball = sprite {
     val gravity = 0.2
+    val bounceX = 0.5
+    val bounceY = 0.5
+    val frictionX = 0.99
+    val frictionY = 1
 
     var size = 10.0
     var vel: Vector2 = Vector2.ZERO // velocity
 
+    // In this sprite, position is calculated globally, i.e. from the top left of the screen and not the window.
+    // Use the Program.toGlobal() function whenever setting the position.
+    costume(globalPos(DrawerCostume {
+        drawer.fill = ColorRGBa.CYAN
+        drawer.circle(it, size)
+    }))
+
     fun Sprite.updateVelocity() {
-        val bottomEdge = position.y + size - window.position.y
-        val belowGround = bottomEdge - window.size.y + arrowHeight
+        // window sizes
+        val wTop = barHeight + window.position.y
+        val wBottom = window.size.y - arrowHeight + window.position.y
+        val wLeft = 1.0 + window.position.x // left border is just 1 pixel
+        val wRight = window.size.x - arrowHeight + window.position.x
+
+        // sprite sizes
+        val sTop = position.y - size
+        val sBottom = position.y + size
+        val sLeft = position.x - size
+        val sRight = position.x + size
+
+        // Gravity & bounces
+        val belowGround = sBottom - wBottom
         if (belowGround < 0) {
-            vel = vel.copy(y = vel.y + gravity)
+            vel = vel.copy(y = vel.y + gravity) // ball is above ground so gravity applies
         } else {
-            vel = vel.copy(y = -0.5 * vel.y)
-            position = position.copy(y = position.y - belowGround)
+            val newVelY = min(
+                -bounceY * vel.y, // bounce
+                -belowGround, // bring the ball back above ground next frame
+                vel.y // continue motion
+            )
+            vel = vel.copy(y = newVelY)
         }
-        val leftEdge = position.x - size - window.position.x
-        val inLeftWall = leftEdge
-        if (inLeftWall > 0) {
 
-        } else {
-            if (abs(vel.x) < abs(inLeftWall)) vel = vel.copy(x = vel.x + inLeftWall * 0.4)
-            vel = vel.copy(x = -0.8 * vel.x)
-            position = position.copy(x = position.x - inLeftWall)
+        val aboveCeiling = wTop - sTop
+        if (aboveCeiling >= 0) {
+            val newVelY = max(
+                -bounceY * vel.y, // bounce
+                aboveCeiling, // bring the ball back in the window next frame
+                vel.y // continue motion
+            )
+            vel = vel.copy(y = newVelY)
         }
-        val rightEdge = position.x + size - window.position.x
-        val inRightWall = rightEdge - window.size.x
-        if (inRightWall < 0) {
 
-        } else {
-            if (abs(vel.x) < abs(inRightWall)) vel = vel.copy(x = vel.x + inRightWall * 0.4)
-            vel = vel.copy(x = -0.8 * vel.x)
-            position = position.copy(x = position.x - inRightWall)
+        val inLeftWall = wLeft - sLeft
+        if (inLeftWall >= 0) {
+            val newVelX = max(
+                -bounceX * vel.x, // bounce
+                inLeftWall, // bring the ball back out of the wall next frame
+                vel.x // continue motion
+            )
+            vel = vel.copy(x = newVelX)
         }
-        vel = vel.copy(x = vel.x * 0.99)
+
+        val inRightWall = sRight - wRight
+        if (inRightWall >= 0) {
+            val newVelX = min(
+                -bounceX * vel.x, // bounce
+                -inRightWall, // bring the ball back out of the wall next frame
+                vel.x // continue motion
+            )
+            vel = vel.copy(x = newVelX)
+        }
+
+        // Friction
+        vel = vel.copy(x = frictionX * vel.x)
+        vel = vel.copy(y = frictionY * vel.y)
     }
 
-    costume(DrawerCostume {
-        drawer.fill = ColorRGBa.CYAN
-        drawer.circle(it - window.position, size)
-    })
-
     init {
-        position = Vector2(x = window.position.x + width / 2.0, y = window.position.y)
+        position = toGlobal(Vector2(x = width / 2.0, y = size))
     }
 
 
