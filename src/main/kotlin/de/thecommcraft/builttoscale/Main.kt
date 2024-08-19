@@ -1,13 +1,13 @@
 package de.thecommcraft.builttoscale
 
-import de.thecommcraft.ktge.DrawerCostume
-import de.thecommcraft.ktge.Sprite
-import de.thecommcraft.ktge.ktge
-import de.thecommcraft.ktge.sprite
+import de.thecommcraft.ktge.*
 import org.openrndr.CursorType
 import org.openrndr.color.ColorRGBa
+import org.openrndr.draw.loadImage
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
+import kotlin.math.min
+import kotlin.math.pow
 
 enum class DragType {
     MOVE_WINDOW,
@@ -26,6 +26,8 @@ val window = sprite {
 
     val doRandomColors = false
     var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(0.42, 0.51, 1.0)
+
+    var resizable = true
 
     var bar: Rectangle = Rectangle.EMPTY
     var resizeRight: Rectangle = Rectangle.EMPTY
@@ -93,13 +95,20 @@ val window = sprite {
         val mouseChange = toGlobal(mouse.position) - dragPosition
         val newWidth = max(dragSize.x + mouseChange.x, minWidth)
         val newHeight = max(dragSize.y + mouseChange.y, minHeight)
-        windowRect = when (dragType) {
-            DragType.NONE -> windowRect
-            DragType.MOVE_WINDOW -> windowRect.copy(corner = dragWindowPosition + mouseChange)
-            DragType.RESIZE_RIGHT -> windowRect.copy(width = newWidth)
-            DragType.RESIZE_DOWN -> windowRect.copy(height = newHeight)
-            DragType.RESIZE_CORNER -> windowRect.copy(width = newWidth, height = newHeight)
-        }
+
+        windowRect = if (resizable)
+            when (dragType) {
+                DragType.NONE -> windowRect
+                DragType.MOVE_WINDOW -> windowRect.copy(corner = dragWindowPosition + mouseChange)
+                DragType.RESIZE_RIGHT -> windowRect.copy(width = newWidth)
+                DragType.RESIZE_DOWN -> windowRect.copy(height = newHeight)
+                DragType.RESIZE_CORNER -> windowRect.copy(width = newWidth, height = newHeight)
+            }
+        else
+            when (dragType) {
+                DragType.MOVE_WINDOW -> windowRect.copy(corner = dragWindowPosition + mouseChange)
+                else -> windowRect
+            }
         resizeWindow()
     }
 
@@ -113,6 +122,37 @@ val window = sprite {
 
     if (doRandomColors) frame {
         if (frameCount % 300 == 0) color = randomColor()
+    }
+
+    fun icon(path: String, index: Int, action: BuildFun<Sprite>): BuiltSprite = sprite {
+        costume(ImageCostume(img = loadImage("data/images/icons/$path")))
+        init {
+            position = Vector2(x = window.size.x - index * barHeight, y = 0.0)
+        }
+        on(window.sized) {
+            position = Vector2(x = width - index * barHeight, y = 0.0)
+        }
+        on(mouse.buttonDown) {
+            if (Rectangle(position, barHeight, barHeight).contains(it.position)) action()
+        }
+    }
+
+    fun Sprite.closeAnimation() {
+        resizable = false
+        val animLength = 30.0 // frames
+        val dSize = (1.0 / min(width, height)).pow(1 / animLength)
+        val dPos = -window.position / animLength
+        fun animFrame(): BuildFun<Sprite> = {
+            windowRect = windowRect.movedBy(dPos)
+            windowRect = windowRect.scaledBy(dSize, 0.0, 0.0)
+            resizeWindow()
+            if (min(width, height) > 2) schedule(animFrame()) else application.exit()
+        }
+        schedule(animFrame())
+    }
+
+    init {
+        createSprite(icon("close.png", 1) { closeAnimation() })
     }
 }
 
