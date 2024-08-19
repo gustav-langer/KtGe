@@ -245,9 +245,14 @@ val ball = sprite {
         position += vel
     }
 
-    on(mouse.buttonDown) {
-        //vel = Vector2.ZERO
-        //position = mouse.position
+    on(keyboard.keyDown) {
+        val dSize = 10.0
+        if (it.modifiers.isEmpty()) {
+            when (it.name) {
+                "+" -> size += dSize
+                "-" -> if (size > dSize) size -= dSize
+            }
+        }
     }
 }
 
