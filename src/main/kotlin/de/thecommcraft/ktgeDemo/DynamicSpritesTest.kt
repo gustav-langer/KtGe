@@ -1,4 +1,6 @@
-import de.thecommcraft.ktge.*
+package de.thecommcraft.ktgeDemo
+
+/*import de.thecommcraft.ktge.*
 import org.openrndr.KEY_ESCAPE
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.color.ColorRGBa
@@ -6,7 +8,7 @@ import org.openrndr.draw.loadImage
 import org.openrndr.math.Vector2
 import kotlin.random.Random
 
-/*val cursor = sprite {
+val cursor = sprite {
     val color = ColorRGBa.WHITE
     costume(DrawerCostume {
         drawer.fill = color

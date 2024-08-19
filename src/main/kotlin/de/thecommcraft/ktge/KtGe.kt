@@ -45,7 +45,7 @@ open class Sprite(
             }
         }
 
-    val childSprites: MutableSet<Drawable> = mutableSetOf()
+    private val childSprites: MutableSet<Drawable> = mutableSetOf()
 
     init {
         for (f in runOnce) f()
@@ -82,9 +82,9 @@ class SpriteBuilder(val parent: SpriteHost, val app: KtgeApp) : KtgeApp by app {
         costumes.addNullable(c, name)
     }
 
-    fun init(code: Sprite.() -> Unit) = runOnce.add(code)
+    fun init(code: BuildFun<Sprite>) = runOnce.add(code)
 
-    fun frame(code: Sprite.() -> Unit) = runEachFrame.add(code)
+    fun frame(code: BuildFun<Sprite>) = runEachFrame.add(code)
 
     fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit) = eventListeners.add {
         event.listen { code(it) }

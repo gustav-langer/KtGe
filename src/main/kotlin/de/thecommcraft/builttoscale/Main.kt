@@ -25,7 +25,7 @@ val window = sprite {
     val minHeight = 128.0
 
     val doRandomColors = false
-    var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(0.42, 0.51,1.0)
+    var color: ColorRGBa = if (doRandomColors) randomColor() else ColorRGBa(0.42, 0.51, 1.0)
 
     var bar: Rectangle = Rectangle.EMPTY
     var resizeRight: Rectangle = Rectangle.EMPTY
@@ -55,7 +55,7 @@ val window = sprite {
     var dragWindowPosition: Vector2 = window.position
     var dragSize: Vector2 = window.size // Size of the window when drag started
 
-    var windowRect = Rectangle(corner = window.position, window.size[0], window.size[1])
+    var windowRect = Rectangle(corner = window.position, window.size.x, window.size.y)
 
     fun resizeWindow() {
         setUIElements()
@@ -199,8 +199,6 @@ val ball = sprite {
     init {
         position = toGlobal(Vector2(x = width / 2.0, y = size))
     }
-
-
 
     frame {
         updateVelocity()
