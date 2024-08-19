@@ -17,7 +17,7 @@ fun randomColor(): ColorRGBa {
     return ColorLCHABa(l, c, h).toRGBa()
 }
 
-fun globalPos(costume: Costume): Costume = object : Costume {
+fun globalCostume(costume: Costume): Costume = object : Costume {
     override fun draw(program: Program, position: Vector2) {
         costume.draw(program, position - program.window.position)
     }

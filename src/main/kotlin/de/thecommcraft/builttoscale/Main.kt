@@ -170,7 +170,7 @@ val ball = sprite {
 
     // In this sprite, position is calculated globally, i.e. from the top left of the screen and not the window.
     // Use the Program.toGlobal() function whenever setting the position.
-    costume(globalPos(DrawerCostume {
+    costume(globalCostume(DrawerCostume {
         drawer.fill = color
         drawer.circle(it, size)
     }))
