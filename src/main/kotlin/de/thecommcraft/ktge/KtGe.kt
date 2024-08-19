@@ -46,12 +46,18 @@ open class Sprite(
         }
 
     private val childSprites: MutableSet<Drawable> = mutableSetOf()
+    private val scheduledCode: MutableList<BuildFun<Sprite>> = mutableListOf()
 
     init {
         for (f in runOnce) f()
     }
 
+    fun schedule(code: BuildFun<Sprite>) = scheduledCode.add(code)
+
     override fun update() {
+        val scheduledCopy = scheduledCode.toList()
+        scheduledCode.clear()
+        for (f in scheduledCopy) f()
         for (f in runEachFrame) f()
         for (spr in childSprites) spr.update()
     }
