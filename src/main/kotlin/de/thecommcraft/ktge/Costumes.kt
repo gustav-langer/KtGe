@@ -45,7 +45,3 @@ class TextCostume(val text: String, val font: FontMap, val drawerConfig: BuildFu
         drawer.text(text, position)
     }
 }
-
-object EmptyCostume : Costume {
-    override fun draw(program: Program, position: Vector2) {}
-}
