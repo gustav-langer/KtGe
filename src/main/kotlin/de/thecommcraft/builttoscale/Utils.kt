@@ -23,5 +23,4 @@ fun globalCostume(costume: Costume): Costume = object : Costume {
     }
 }
 
-val simulatedWindowCorner = Vector2(x = 1.0, y = barHeight)
 fun Program.toGlobal(position: Vector2): Vector2 = position + window.position + simulatedWindowCorner

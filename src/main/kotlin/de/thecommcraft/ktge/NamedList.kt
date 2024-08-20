@@ -61,5 +61,9 @@ class MapMutableNamedList<E, N : Any>(private val items: MutableList<E>, private
     }
 }
 
-fun <E, N : Any> emptyNamedList() = MapNamedList<E, N>(listOf(), listOf())
-fun <E, N : Any> emptyMutableNamedList() = MapMutableNamedList<E, N>(mutableListOf(), emptyList())
+fun <E, N : Any> namedListOf(vararg items: Pair<E, N?>) = MapNamedList(items.map { it.first }, items.map { it.second })
+fun <E, N : Any> mutableNamedListOf(vararg items: Pair<E, N?>) =
+    MapMutableNamedList(items.map { it.first }.toMutableList(), items.map { it.second })
+
+val <E> E.noName
+    get() = this to null
