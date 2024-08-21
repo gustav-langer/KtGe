@@ -101,6 +101,7 @@ plugins {
     alias(libs.plugins.runtime)
     alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
+    id("maven-publish")
 }
 
 repositories {
