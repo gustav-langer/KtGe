@@ -101,7 +101,7 @@ plugins {
     alias(libs.plugins.runtime)
     alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
-    id("maven-publish")
+    `maven-publish`
 }
 
 repositories {
@@ -240,6 +240,20 @@ tasks {
         }
     }
 }
+
+/*afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                        groupId = 'com.github.jitpack'
+                artifactId = 'android-example'
+                version = '1.0'
+            }
+        }
+    }
+}*/
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
