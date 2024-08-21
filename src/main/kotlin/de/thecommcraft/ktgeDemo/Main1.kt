@@ -1,6 +1,10 @@
 package de.thecommcraft.ktgeDemo
 
-import de.thecommcraft.ktge.*
+import de.thecommcraft.ktge.DrawerCostume
+import de.thecommcraft.ktge.ImageCostume
+import de.thecommcraft.ktge.Sprite.Companion.sprite
+import de.thecommcraft.ktge.TextCostume
+import de.thecommcraft.ktge.ktge
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.loadFont
 import org.openrndr.draw.loadImage
@@ -10,15 +14,17 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 val pinkCircle = sprite {
-    costume(DrawerCostume {
-        drawer.fill = ColorRGBa.PINK
-        drawer.circle(it, 140.0)
-    })
-    frame {
-        position = Vector2(
-            x = cos(seconds) * width / 2.0 + width / 2.0,
-            y = sin(0.5 * seconds) * height / 2.0 + height / 2.0
-        )
+    program.run {
+        costume(DrawerCostume {
+            drawer.fill = ColorRGBa.PINK
+            drawer.circle(it, 140.0)
+        })
+        frame {
+            position = Vector2(
+                x = cos(seconds) * width / 2.0 + width / 2.0,
+                y = sin(0.5 * seconds) * height / 2.0 + height / 2.0
+            )
+        }
     }
 }
 
@@ -28,9 +34,7 @@ val openrndrText = sprite {
         fill = ColorRGBa.WHITE
     }))
 
-    init {
-        position = Vector2(width / 2.0, height / 2.0)
-    }
+    position = Vector2(program.width / 2.0, program.height / 2.0)
 }
 
 val background = sprite {
