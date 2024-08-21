@@ -241,19 +241,22 @@ tasks {
     }
 }
 
-/*afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                from components.release
-                        groupId = 'com.github.jitpack'
-                artifactId = 'android-example'
-                version = '1.0'
-            }
+publishing {
+    publications {
+        // Creates a Maven publication called "release".
+        create<MavenPublication>("release") {
+            artifactId = "de.thecommcraft.ktge"
         }
+        /*MavenPublication
+        release(MavenPublication) {
+            from components.release
+                    groupId = 'com.github.jitpack'
+            artifactId = 'android-example'
+            version = '1.0'
+        }*/
     }
-}*/
+}
+
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
