@@ -1,4 +1,4 @@
-package de.thecommcraft.ktge // ktge
+package de.thecommcraft.ktge
 
 import kotlinx.coroutines.delay
 import org.openrndr.*
