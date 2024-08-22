@@ -24,7 +24,16 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
 
     fun frame(code: BuildFun<TileGrid>) = runEachFrame.add(code)
 
-    fun drawTile(gridX: Int, gridY: Int) {
+    operator fun get(x: Int, y: Int): Int {
+        return tiles[x][y]
+    }
+
+    operator fun set(x: Int, y: Int, value: Int) {
+        tiles[x][y] = value
+        drawTile(x, y)
+    }
+
+    private fun drawTile(gridX: Int, gridY: Int) {
         program.drawer.withTarget(renderTarget) {
             val position = (IntVector2(gridX, gridY) * tileSize).vector2
             tileTypes[tiles[gridX][gridY]]?.draw(program, position)
@@ -35,6 +44,7 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
         this.program = program
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
         initFun()
+        (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
     }
 
     override fun update() {
