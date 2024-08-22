@@ -10,13 +10,14 @@ typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias SpriteCode = BuildFun<Sprite>
 
 interface Drawable {
-    fun draw(program: Program)
+    fun init(program: Program)
     fun update()
+    fun draw()
 }
 
 interface SpriteHost {
-    fun createSprite(sprite: Sprite)
-    fun removeSprite(sprite: Sprite)
+    fun createSprite(sprite: Drawable)
+    fun removeSprite(sprite: Drawable)
 }
 
 // TODO does this need access to SpriteHost parent? where might that be used?
@@ -36,7 +37,7 @@ abstract class Sprite : Drawable, SpriteHost {
         }
 
     private val costumes: MutableNamedList<Costume, String> = mutableNamedListOf()
-    private val childSprites: MutableSet<Sprite> = mutableSetOf()
+    private val childSprites: MutableSet<Drawable> = mutableSetOf()
     private val runEachFrame: MutableList<SpriteCode> = mutableListOf()
     private val scheduledCode: MutableList<SpriteCode> = mutableListOf()
 
@@ -55,7 +56,7 @@ abstract class Sprite : Drawable, SpriteHost {
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
     protected abstract fun initSprite()
-    fun init(program: Program) {
+    override fun init(program: Program) {
         this.program = program
         initSprite()
     }
@@ -68,17 +69,17 @@ abstract class Sprite : Drawable, SpriteHost {
         for (spr in childSprites) spr.update()
     }
 
-    override fun draw(program: Program) {
+    override fun draw() {
         costumes.getOrNull(costumeIdx)?.draw(program, position)
-        for (spr in childSprites) spr.draw(program)
+        for (spr in childSprites) spr.draw()
     }
 
-    override fun createSprite(sprite: Sprite) {
+    override fun createSprite(sprite: Drawable) {
         childSprites.add(sprite)
         sprite.init(program)
     }
 
-    override fun removeSprite(sprite: Sprite) {
+    override fun removeSprite(sprite: Drawable) {
         childSprites.remove(sprite)
     }
 
@@ -94,7 +95,7 @@ interface KtgeApp : Program, SpriteHost
 
 // Main
 fun ktge(
-    sprites: List<Sprite>,
+    sprites: List<Drawable>,
     config: BuildFun<Configuration> = {},
     background: ColorRGBa? = ColorRGBa.BLACK,
     frameRate: Long = 60L
@@ -105,14 +106,14 @@ fun ktge(
         window.presentationMode = PresentationMode.MANUAL
         var lastTime = seconds
 
-        val spritesActual: MutableList<Sprite> = mutableListOf() // TODO name
+        val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
         val appImpl = object : KtgeApp, Program by this {
-            override fun createSprite(sprite: Sprite) {
+            override fun createSprite(sprite: Drawable) {
                 spritesActual.add(sprite)
                 sprite.init(this)
             }
 
-            override fun removeSprite(sprite: Sprite) {
+            override fun removeSprite(sprite: Drawable) {
                 spritesActual.remove(sprite)
             }
         }
@@ -134,7 +135,7 @@ fun ktge(
             }
             for (spr in spritesActual) {
                 spr.update()
-                spr.draw(this)
+                spr.draw()
             }
         }
     }
