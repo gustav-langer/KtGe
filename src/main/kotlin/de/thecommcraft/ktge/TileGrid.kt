@@ -31,7 +31,7 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
         }
     }
 
-    override fun init(program: Program) {
+    override fun init(parent: SpriteHost, program: Program) {
         this.program = program
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
         initFun()

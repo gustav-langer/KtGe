@@ -1,16 +1,16 @@
-package de.thecommcraft.ktge
+package de.thecommcraft.ktge // ktge
 
+import kotlinx.coroutines.delay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
-import kotlinx.coroutines.delay
 
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias SpriteCode = BuildFun<Sprite>
 
 interface Drawable {
-    fun init(program: Program)
+    fun init(parent: SpriteHost, program: Program)
     fun update()
     fun draw()
 }
@@ -18,10 +18,11 @@ interface Drawable {
 interface SpriteHost {
     fun createSprite(sprite: Drawable)
     fun removeSprite(sprite: Drawable)
+    fun removeSprites(predicate: (Drawable) -> Boolean)
 }
 
-// TODO does this need access to SpriteHost parent? where might that be used?
 abstract class Sprite : Drawable, SpriteHost {
+    lateinit var parent: SpriteHost
     lateinit var program: Program
 
     var position: Vector2 = Vector2.ZERO
@@ -56,7 +57,8 @@ abstract class Sprite : Drawable, SpriteHost {
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
     protected abstract fun initSprite()
-    override fun init(program: Program) {
+    override fun init(parent: SpriteHost, program: Program) {
+        this.parent = parent
         this.program = program
         initSprite()
     }
@@ -76,11 +78,15 @@ abstract class Sprite : Drawable, SpriteHost {
 
     override fun createSprite(sprite: Drawable) {
         childSprites.add(sprite)
-        sprite.init(program)
+        sprite.init(this, program)
     }
 
     override fun removeSprite(sprite: Drawable) {
         childSprites.remove(sprite)
+    }
+
+    override fun removeSprites(predicate: (Drawable) -> Boolean) {
+        childSprites.removeIf(predicate)
     }
 
     companion object {
@@ -104,17 +110,21 @@ fun ktge(
 
     program {
         window.presentationMode = PresentationMode.MANUAL
-        var lastTime = seconds
+        var lastDraw = seconds
 
         val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
         val appImpl = object : KtgeApp, Program by this {
             override fun createSprite(sprite: Drawable) {
                 spritesActual.add(sprite)
-                sprite.init(this)
+                sprite.init(this, this)
             }
 
             override fun removeSprite(sprite: Drawable) {
                 spritesActual.remove(sprite)
+            }
+
+            override fun removeSprites(predicate: (Drawable) -> Boolean) {
+                spritesActual.removeIf(predicate)
             }
         }
 
@@ -124,10 +134,10 @@ fun ktge(
 
         extend {
             launch {
-                val t = 1000.0 / frameRate
-                val t0 = seconds - lastTime
-                lastTime = seconds
-                val d = (t - t0 * 1000).toLong() // in millis
+                val msPerFrame = 1000.0 / frameRate
+                val msSinceLastDraw = (seconds - lastDraw) * 1000
+                lastDraw = seconds
+                val d = (msPerFrame - msSinceLastDraw).toLong()
 
                 if (d > 0L) delay(d)
 
