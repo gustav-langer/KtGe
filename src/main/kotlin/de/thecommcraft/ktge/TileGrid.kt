@@ -33,7 +33,7 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
         drawTile(x, y)
     }
 
-    private fun drawTile(gridX: Int, gridY: Int) {
+    fun drawTile(gridX: Int, gridY: Int) {
         program.drawer.withTarget(renderTarget) {
             val position = (IntVector2(gridX, gridY) * tileSize).vector2
             tileTypes[tiles[gridX][gridY]]?.draw(program, position)
