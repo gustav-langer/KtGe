@@ -12,6 +12,7 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
     private val runEachFrame: MutableList<BuildFun<TileGrid>> = mutableListOf()
+    private val runOnChange: MutableList<TileGrid.() -> Unit> = mutableListOf()
 
     var position: Vector2 = Vector2.ZERO
     val tiles: MutableList<MutableList<Int>> = MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
@@ -24,7 +25,17 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
 
     fun frame(code: BuildFun<TileGrid>) = runEachFrame.add(code)
 
-    fun drawTile(gridX: Int, gridY: Int) {
+    operator fun get(x: Int, y: Int): Int {
+        return tiles[x][y]
+    }
+
+    operator fun set(x: Int, y: Int, value: Int) {
+        tiles[x][y] = value
+        drawTile(x, y)
+        runOnChange.forEach { it() }
+    }
+
+    private fun drawTile(gridX: Int, gridY: Int) {
         program.drawer.withTarget(renderTarget) {
             val position = (IntVector2(gridX, gridY) * tileSize).vector2
             tileTypes[tiles[gridX][gridY]]?.draw(program, position)
@@ -35,6 +46,11 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
         this.program = program
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
         initFun()
+        (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
+    }
+
+    fun onChange(changeFun: TileGrid.() -> Unit): Unit {
+        runOnChange.add(changeFun)
     }
 
     override fun update() {
