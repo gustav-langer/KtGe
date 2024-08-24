@@ -145,6 +145,8 @@ fun ktge(
             }
             for (spr in spritesActual) {
                 spr.update()
+            }
+            for (spr in spritesActual) {
                 spr.draw()
             }
         }

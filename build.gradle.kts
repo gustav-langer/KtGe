@@ -4,7 +4,7 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "de.thecommcraft"
-version = "1.0.0"
+version = "0.1.0"
 
 val applicationMainClass = "de.thecommcraft.builttoscale.MainKt"
 
@@ -99,9 +99,10 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.shadow)
     alias(libs.plugins.runtime)
-    alias(libs.plugins.gitarchive.tomarkdown).apply(false)
+    //alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
     `maven-publish`
+    `java-library`
 }
 
 repositories {
@@ -217,9 +218,9 @@ runtime {
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
-tasks.register<org.openrndr.extra.gitarchiver.GitArchiveToMarkdown>("gitArchiveToMarkDown") {
+/*tasks.register<org.openrndr.extra.gitarchiver.GitArchiveToMarkdown>("gitArchiveToMarkDown") {
     historySize.set(20)
-}
+}*/
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
@@ -241,22 +242,17 @@ tasks {
     }
 }
 
+// ------------------------------------------------------------------------------------------------------------------ //
+
 publishing {
     publications {
-        // Creates a Maven publication called "release".
-        create<MavenPublication>("release") {
-            artifactId = "de.thecommcraft.ktge"
+        create<MavenPublication>("maven") {
+            artifactId = "ktge"
+
+            from(components["java"])
         }
-        /*MavenPublication
-        release(MavenPublication) {
-            from components.release
-                    groupId = 'com.github.jitpack'
-            artifactId = 'android-example'
-            version = '1.0'
-        }*/
     }
 }
-
 
 // ------------------------------------------------------------------------------------------------------------------ //
 

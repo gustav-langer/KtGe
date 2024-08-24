@@ -20,8 +20,7 @@ val tileBackground = TileGrid(tileSize = 50, gridWidth = 16, gridHeight = 12) {
         val x = Random.nextInt(gridWidth)
         val y = Random.nextInt(gridHeight)
         val tile = Random.nextInt(2) // selects either 0 or 1
-        tiles[x][y] = tile
-        drawTile(x, y)
+        this[x, y] = tile
     }
 }
 
