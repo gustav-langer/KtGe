@@ -1,12 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-group = "de.thecommcraft"
-version = "0.1.0"
-
-val applicationMainClass = "de.thecommcraft.builttoscale.MainKt"
+group = properties["group"] ?: ""
+version = properties["version"] ?: "0.0.0"
 
 /**  ## additional ORX features to be added to this project */
 val orxFeatures = setOf<String>(
@@ -93,16 +89,11 @@ val applicationLogging = Logging.FULL
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    java
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.runtime)
-    //alias(libs.plugins.gitarchive.tomarkdown).apply(false)
-    alias(libs.plugins.versions)
-    `maven-publish`
+    kotlin("jvm")
     `java-library`
+    `maven-publish`
+    alias(libs.plugins.versions)
 }
 
 repositories {
@@ -111,10 +102,6 @@ repositories {
 }
 
 dependencies {
-
-//    implementation(libs.jsoup)
-//    implementation(libs.gson)
-//    implementation(libs.csv)
     implementation("io.michaelrocks.bimap:bimap:1.1.0")
 
     implementation(libs.kotlinx.coroutines.core)
@@ -136,91 +123,12 @@ dependencies {
         }
     }
     implementation(kotlin("stdlib-jdk8"))
-    testImplementation(libs.junit)
+    testImplementation(kotlin("test"))
 }
 
-// ------------------------------------------------------------------------------------------------------------------ //
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+tasks.test {
+    useJUnitPlatform()
 }
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
-}
-
-// ------------------------------------------------------------------------------------------------------------------ //
-
-project.setProperty("mainClassName", applicationMainClass)
-
-application {
-    if (hasProperty("openrndr.application")) {
-        mainClass.set("${property("openrndr.application")}")
-    }
-}
-
-tasks {
-    named<ShadowJar>("shadowJar") {
-        manifest {
-            attributes["Main-Class"] = applicationMainClass
-            attributes["Implementation-Version"] = project.version
-        }
-        minimize {
-            exclude(dependency("org.openrndr:openrndr-gl3:.*"))
-            exclude(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
-            exclude(dependency("org.slf4j:slf4j-simple:.*"))
-            exclude(dependency("org.apache.logging.log4j:log4j-slf4j2-impl:.*"))
-            exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
-            exclude(dependency("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:.*"))
-        }
-    }
-    named<org.beryx.runtime.JPackageTask>("jpackage") {
-        doLast {
-            val destPath = if(OperatingSystem.current().isMacOsX)
-                "build/jpackage/openrndr-application.app/Contents/Resources/data"
-            else
-                "build/jpackage/openrndr-application/data"
-
-            copy {
-                from("data") {
-                    include("**/*")
-                }
-                into(destPath)
-            }
-        }
-    }
-}
-
-// ------------------------------------------------------------------------------------------------------------------ //
-
-tasks.register<Zip>("jpackageZip") {
-    archiveFileName.set("openrndr-application.zip")
-    from("${layout.buildDirectory.get()}/jpackage") {
-        include("**/*")
-    }
-}
-tasks.findByName("jpackageZip")?.dependsOn("jpackage")
-
-// ------------------------------------------------------------------------------------------------------------------ //
-
-runtime {
-    jpackage {
-        imageName = "openrndr-application"
-        skipInstaller = true
-        if (OperatingSystem.current().isMacOsX) {
-            jvmArgs.add("-XstartOnFirstThread")
-            jvmArgs.add("-Duser.dir=${"$"}APPDIR/../Resources")
-        }
-    }
-    options.set(listOf("--strip-debug", "--compress", "1", "--no-header-files", "--no-man-pages"))
-    modules.set(listOf("jdk.unsupported", "java.management", "java.desktop"))
-}
-
-// ------------------------------------------------------------------------------------------------------------------ //
-
-/*tasks.register<org.openrndr.extra.gitarchiver.GitArchiveToMarkdown>("gitArchiveToMarkDown") {
-    historySize.set(20)
-}*/
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
@@ -298,23 +206,23 @@ class Openrndr {
         dependencies {
             runtimeOnly(openrndr("gl3"))
             runtimeOnly(openrndrNatives("gl3"))
-            implementation(openrndr("openal"))
+            api(openrndr("openal"))
             runtimeOnly(openrndrNatives("openal"))
-            implementation(openrndr("application"))
-            implementation(openrndr("svg"))
-            implementation(openrndr("animatable"))
-            implementation(openrndr("extensions"))
-            implementation(openrndr("filter"))
-            implementation(openrndr("dialogs"))
+            api(openrndr("application"))
+            api(openrndr("svg"))
+            api(openrndr("animatable"))
+            api(openrndr("extensions"))
+            api(openrndr("filter"))
+            api(openrndr("dialogs"))
             if ("video" in openrndrFeatures) {
-                implementation(openrndr("ffmpeg"))
+                api(openrndr("ffmpeg"))
                 runtimeOnly(openrndrNatives("ffmpeg"))
             }
             for (feature in orxFeatures) {
-                implementation(orx(feature))
+                api(orx(feature))
             }
             for (feature in ormlFeatures) {
-                implementation(orml(feature))
+                api(orml(feature))
             }
             if ("orx-tensorflow" in orxFeatures) runtimeOnly("org.openrndr.extra:$orxTensorflowBackend-natives-$os:$orxVersion")
             if ("orx-kinect-v1" in orxFeatures) runtimeOnly(orxNatives("orx-kinect-v1"))
@@ -322,46 +230,4 @@ class Openrndr {
         }
     }
 }
-val openrndr = Openrndr()
-
-if (properties["openrndr.tasks"] == "true") {
-    task("create executable jar for $applicationMainClass") {
-        group = " \uD83E\uDD8C OPENRNDR"
-        dependsOn("shadowJar")
-    }
-
-    task("run $applicationMainClass") {
-        group = " \uD83E\uDD8C OPENRNDR"
-        dependsOn("run")
-    }
-
-    task("create standalone executable for $applicationMainClass") {
-        group = " \uD83E\uDD8C OPENRNDR"
-        dependsOn("jpackageZip")
-    }
-
-    task("add IDE file scopes") {
-        group = " \uD83E\uDD8C OPENRNDR"
-        val scopesFolder = File("${project.projectDir}/.idea/scopes")
-        scopesFolder.mkdirs()
-
-        val files = listOf(
-            "Code" to "file:*.kt||file:*.frag||file:*.vert||file:*.glsl",
-            "Text" to "file:*.txt||file:*.md||file:*.xml||file:*.json",
-            "Gradle" to "file[*buildSrc*]:*/||file:*gradle.*||file:*.gradle||file:*/gradle-wrapper.properties||file:*.toml",
-            "Media" to "file:*.png||file:*.jpg||file:*.dds||file:*.exr||file:*.mp3||file:*.wav||file:*.mp4||file:*.mov||file:*.svg"
-        )
-        files.forEach { (name, pattern) ->
-            val file = File(scopesFolder, "__$name.xml")
-            if (!file.exists()) {
-                file.writeText(
-                    """
-                    <component name="DependencyValidationManager">
-                      <scope name=" ★ $name" pattern="$pattern" />
-                    </component>
-                    """.trimIndent()
-                )
-            }
-        }
-    }
-}
+val openrndr = Openrndr() // creates an instance which executes the init block and registers the needed dependencies.
