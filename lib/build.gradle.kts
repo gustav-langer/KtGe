@@ -132,6 +132,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+kotlin {
+    jvmToolchain(19)
+}
+
 // ------------------------------------------------------------------------------------------------------------------ //
 
 tasks {
@@ -174,7 +178,7 @@ run { // Wrapped in a run to prevent leaking the many variables that are irrelev
     // choices are "orx-tensorflow-gpu", "orx-tensorflow"
     val orxTensorflowBackend = "orx-tensorflow"
 
-    val currArch: String? = DefaultNativePlatform("current").architecture.name
+    val currArch: String = DefaultNativePlatform("current").architecture.name
     val currOs: OperatingSystem = OperatingSystem.current()
     val os = if (project.hasProperty("targetPlatform")) {
         val supportedPlatforms = setOf("windows", "macos", "linux-x64", "linux-arm64")
