@@ -133,7 +133,7 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(19)
+    jvmToolchain(11)
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -163,7 +163,7 @@ publishing {
         create<MavenPublication>("maven") {
             artifactId = "ktge"
 
-            from(components["java"])
+            from(components["kotlin"])
         }
     }
 }

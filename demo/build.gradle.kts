@@ -28,6 +28,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+kotlin {
+    jvmToolchain(11)
+}
+
 // ------------------------------------------------------------------------------------------------------------------ //
 
 tasks { // TODO find a way for any project to automatically add these tasks (once they are fixed)
