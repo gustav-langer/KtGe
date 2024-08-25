@@ -27,7 +27,7 @@ class GameWindow(
 
     var resizable = true
     val barHeight = 37.0 // pixels
-    val arrowHeight = 15.0 // pixels
+    val resizeHeight = 15.0 // pixels
 
     var bar: Rectangle = Rectangle.EMPTY
         private set
@@ -114,17 +114,20 @@ class GameWindow(
 
     private fun setUIElements() = program.run {
         bar = Rectangle(corner = Vector2.ZERO, width.toDouble(), barHeight)
-        resizeRight =
-            Rectangle(
-                corner = Vector2(width.toDouble() - arrowHeight, barHeight),
-                arrowHeight,
-                height - barHeight - arrowHeight
-            )
-        resizeDown = Rectangle(corner = Vector2(0.0, height.toDouble() - arrowHeight), width - arrowHeight, arrowHeight)
+        resizeRight = Rectangle(
+            corner = Vector2(width.toDouble() - resizeHeight, barHeight),
+            width = resizeHeight,
+            height = height - barHeight - resizeHeight
+        )
+        resizeDown = Rectangle(
+            corner = Vector2(0.0, height.toDouble() - resizeHeight),
+            width = width - resizeHeight,
+            height = resizeHeight
+        )
         resizeCorner = Rectangle(
-            corner = Vector2(width.toDouble() - arrowHeight, height.toDouble() - arrowHeight),
-            arrowHeight,
-            arrowHeight
+            corner = Vector2(width.toDouble() - resizeHeight, height.toDouble() - resizeHeight),
+            width = resizeHeight,
+            height = resizeHeight
         )
     }
 
@@ -148,7 +151,7 @@ class GameWindow(
         schedule(animFrame())
     }
 
-    inner class Icon(val path: String, val index: Int, val action: SpriteCode) : Sprite() {
+    inner class Icon(private val path: String, private val index: Int, val action: SpriteCode) : Sprite() {
         override fun initSprite() = program.run {
             position = Vector2(x = window.size.x - index * barHeight, y = 0.0)
 

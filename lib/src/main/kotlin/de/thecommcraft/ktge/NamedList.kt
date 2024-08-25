@@ -13,8 +13,7 @@ interface NamedList<E, N : Any> : List<E> {
 
 interface MutableNamedList<E, N : Any> : NamedList<E, N>, MutableList<E> {
     fun add(element: E, name: N): Boolean
-    fun addNullable(element: E, name: N?): Boolean =
-        if (name == null) add(element) else add(element, name)
+    fun addNullable(element: E, name: N?): Boolean = if (name == null) add(element) else add(element, name)
 
     fun toImmutable(): NamedList<E, N>
 }

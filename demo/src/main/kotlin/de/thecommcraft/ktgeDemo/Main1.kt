@@ -38,10 +38,8 @@ val openrndrText = sprite {
 }
 
 val background = sprite {
-    costume(ImageCostume(
-        loadImage("data/images/pm5544.png"),
-        drawerConfig = { drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2)) }
-    ))
+    costume(ImageCostume(loadImage("data/images/pm5544.png"),
+        drawerConfig = { drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2)) }))
 }
 
 fun main() = ktge(

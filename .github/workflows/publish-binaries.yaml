@@ -18,9 +18,9 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
 
-    runs-on: ${{ matrix.os }}          
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
@@ -56,4 +56,3 @@ jobs:
           replacesArtifacts: false
           body: Fully automated release
           artifacts: "./build/distributions/openrndr-application-${{env.OR_TARGET_NAME}}.zip"
-

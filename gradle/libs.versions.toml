@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.22"
+kotlin = "1.9.24"
 openrndr = "0.4.4"
 orx = "0.4.4"
 orml = "0.4.1"
@@ -19,7 +19,7 @@ log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.
 jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
 jackson-json = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version.ref = "jackson" }
 
-kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.7.3" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = "1.8.1" }
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
 junit = { group = "junit", name = "junit", version = "4.13.2" }
 jsoup = { group = "org.jsoup", name = "jsoup", version = "1.17.1" }
@@ -28,8 +28,7 @@ csv = { group = "com.github.doyaaaaaken", name = "kotlin-csv-jvm", version = "1.
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
+shadow = { id = "com.gradleup.shadow", version = "8.3.0" }
 runtime = { id = "org.beryx.runtime", version = "1.13.0" }
 gitarchive-tomarkdown = { id = "org.openrndr.extra.gitarchiver.tomarkdown", version.ref = "orx" }
-versions = { id = "com.github.ben-manes.versions", version = "0.50.0" }
-
+versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
