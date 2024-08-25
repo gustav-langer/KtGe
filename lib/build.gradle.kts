@@ -112,9 +112,11 @@ dependencies {
         Logging.NONE -> {
             runtimeOnly(libs.slf4j.nop)
         }
+
         Logging.SIMPLE -> {
             runtimeOnly(libs.slf4j.simple)
         }
+
         Logging.FULL -> {
             runtimeOnly(libs.log4j.slf4j2)
             runtimeOnly(libs.log4j.core)
@@ -164,7 +166,7 @@ publishing {
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
-class Openrndr {
+run { // Wrapped in a run to prevent leaking the many variables that are irrelevant to other scripts
     val openrndrVersion = libs.versions.openrndr.get()
     val orxVersion = libs.versions.orx.get()
     val ormlVersion = libs.versions.orml.get()
@@ -172,8 +174,8 @@ class Openrndr {
     // choices are "orx-tensorflow-gpu", "orx-tensorflow"
     val orxTensorflowBackend = "orx-tensorflow"
 
-    val currArch = DefaultNativePlatform("current").architecture.name
-    val currOs = OperatingSystem.current()
+    val currArch: String? = DefaultNativePlatform("current").architecture.name
+    val currOs: OperatingSystem = OperatingSystem.current()
     val os = if (project.hasProperty("targetPlatform")) {
         val supportedPlatforms = setOf("windows", "macos", "linux-x64", "linux-arm64")
         val platform: String = project.property("targetPlatform") as String
@@ -188,11 +190,13 @@ class Openrndr {
             "aarch64", "arm-v8" -> "macos-arm64"
             else -> "macos"
         }
+
         currOs.isLinux -> when (currArch) {
             "x86-64" -> "linux-x64"
             "aarch64" -> "linux-arm64"
             else -> throw IllegalArgumentException("architecture not supported: $currArch")
         }
+
         else -> throw IllegalArgumentException("os not supported: ${currOs.name}")
     }
 
@@ -202,32 +206,29 @@ class Openrndr {
     fun openrndrNatives(module: String) = "org.openrndr:openrndr-$module-natives-$os:$openrndrVersion"
     fun orxNatives(module: String) = "org.openrndr.extra:$module-natives-$os:$orxVersion"
 
-    init {
-        dependencies {
-            runtimeOnly(openrndr("gl3"))
-            runtimeOnly(openrndrNatives("gl3"))
-            api(openrndr("openal"))
-            runtimeOnly(openrndrNatives("openal"))
-            api(openrndr("application"))
-            api(openrndr("svg"))
-            api(openrndr("animatable"))
-            api(openrndr("extensions"))
-            api(openrndr("filter"))
-            api(openrndr("dialogs"))
-            if ("video" in openrndrFeatures) {
-                api(openrndr("ffmpeg"))
-                runtimeOnly(openrndrNatives("ffmpeg"))
-            }
-            for (feature in orxFeatures) {
-                api(orx(feature))
-            }
-            for (feature in ormlFeatures) {
-                api(orml(feature))
-            }
-            if ("orx-tensorflow" in orxFeatures) runtimeOnly("org.openrndr.extra:$orxTensorflowBackend-natives-$os:$orxVersion")
-            if ("orx-kinect-v1" in orxFeatures) runtimeOnly(orxNatives("orx-kinect-v1"))
-            if ("orx-olive" in orxFeatures) implementation(libs.kotlin.script.runtime)
+    dependencies {
+        runtimeOnly(openrndr("gl3"))
+        runtimeOnly(openrndrNatives("gl3"))
+        api(openrndr("openal"))
+        runtimeOnly(openrndrNatives("openal"))
+        api(openrndr("application"))
+        api(openrndr("svg"))
+        api(openrndr("animatable"))
+        api(openrndr("extensions"))
+        api(openrndr("filter"))
+        api(openrndr("dialogs"))
+        if ("video" in openrndrFeatures) {
+            api(openrndr("ffmpeg"))
+            runtimeOnly(openrndrNatives("ffmpeg"))
         }
+        for (feature in orxFeatures) {
+            api(orx(feature))
+        }
+        for (feature in ormlFeatures) {
+            api(orml(feature))
+        }
+        if ("orx-tensorflow" in orxFeatures) runtimeOnly("org.openrndr.extra:$orxTensorflowBackend-natives-$os:$orxVersion")
+        if ("orx-kinect-v1" in orxFeatures) runtimeOnly(orxNatives("orx-kinect-v1"))
+        if ("orx-olive" in orxFeatures) implementation(libs.kotlin.script.runtime)
     }
 }
-val openrndr = Openrndr() // creates an instance which executes the init block and registers the needed dependencies.

@@ -57,25 +57,16 @@ val global = sprite {
 }
 
 val testAudioGroup: AudioGroup = audioGroup {
-    audioFile(
-        filePath = "data/sounds/hit.wav",
-        name = "hit"
-    )
+    audioFile(filePath = "data/sounds/hit.wav", name = "hit")
 }
 
 val testAudioGroup2: AudioGroup = audioGroup {
-    audioFile(
-        filePath = "data/sounds/hit.wav",
-        name = "hit"
-    )
+    audioFile(filePath = "data/sounds/hit.wav", name = "hit")
     audio(testAudioGroup, name = "group")
 }
 
-fun main() = ktge(
-    sprites = listOf(global, cursor),
-    config = {
-        windowResizable = true
-        title = "KtGe Demo"
-        hideCursor = true
-    }
-)
+fun main() = ktge(sprites = listOf(global, cursor), config = {
+    windowResizable = true
+    title = "KtGe Demo"
+    hideCursor = true
+})

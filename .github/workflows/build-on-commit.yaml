@@ -17,4 +17,3 @@ jobs:
 
       - name: Build sources
         run: ./gradlew build
-

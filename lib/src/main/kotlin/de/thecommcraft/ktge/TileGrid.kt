@@ -6,8 +6,9 @@ import org.openrndr.draw.renderTarget
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 
-class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWidth, private val initFun: BuildFun<TileGrid> = {}) :
-    Drawable {
+class TileGrid(
+    val tileSize: Int, val gridWidth: Int, val gridHeight: Int = gridWidth, private val initFun: BuildFun<TileGrid> = {}
+) : Drawable {
     lateinit var program: Program
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
@@ -49,7 +50,7 @@ class TileGrid(val tileSize: Int, val gridWidth: Int, val gridHeight: Int=gridWi
         (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
     }
 
-    fun onChange(changeFun: TileGrid.() -> Unit): Unit {
+    fun onChange(changeFun: TileGrid.() -> Unit) {
         runOnChange.add(changeFun)
     }
 

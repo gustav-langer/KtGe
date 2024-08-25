@@ -76,8 +76,7 @@ class AudioGroupBuilder {
         _audios.add(audio)
     }
 
-    fun build(): AudioGroup =
-        AudioGroup(audios = _audios, audioNames = _audioNames)
+    fun build(): AudioGroup = AudioGroup(audios = _audios, audioNames = _audioNames)
 }
 
 fun audioGroup(init: BuildFun<AudioGroupBuilder>): AudioGroup {

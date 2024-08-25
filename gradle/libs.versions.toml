@@ -32,4 +32,3 @@ shadow = { id = "com.gradleup.shadow", version = "8.3.0" }
 runtime = { id = "org.beryx.runtime", version = "1.13.0" }
 gitarchive-tomarkdown = { id = "org.openrndr.extra.gitarchiver.tomarkdown", version.ref = "orx" }
 versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
-

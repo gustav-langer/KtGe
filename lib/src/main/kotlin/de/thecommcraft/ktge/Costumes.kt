@@ -21,7 +21,7 @@ class ImageCostume(
     scale: Int = 1,
     scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
 ) : Costume {
-    val buf = colorBuffer(img.width * scale, img.height * scale)
+    private val buf = colorBuffer(img.width * scale, img.height * scale)
 
     init {
         img.copyTo(

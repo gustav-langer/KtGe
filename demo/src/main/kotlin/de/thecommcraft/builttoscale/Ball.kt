@@ -43,12 +43,12 @@ class Ball(val color: ColorRGBa = ColorRGBa.CYAN) : Sprite() {
     // In this sprite, position is calculated globally, i.e. from the top left of the screen and not the window.
     // Use the Program.toGlobal() function whenever setting the position.
 
-    fun updateVelocity() = program.run {
+    private fun updateVelocity() = program.run {
         // window sizes
         val wTop = gameWindow.barHeight + window.position.y
-        val wBottom = window.size.y - gameWindow.arrowHeight + window.position.y
+        val wBottom = window.size.y - gameWindow.resizeHeight + window.position.y
         val wLeft = 1.0 + window.position.x // left border is just 1 pixel
-        val wRight = window.size.x - gameWindow.arrowHeight + window.position.x
+        val wRight = window.size.x - gameWindow.resizeHeight + window.position.x
 
         // sprite sizes
         val sTop = position.y - size
