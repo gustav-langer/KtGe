@@ -7,7 +7,7 @@ import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 
-class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, private val initFun: BuildFun<TileGrid> = {}) :
+class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
     Drawable {
     lateinit var program: Program
 
@@ -16,7 +16,7 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
     private val runOnChange: MutableList<TileGrid.() -> Unit> = mutableListOf()
 
     var position: Vector2 = Vector2.ZERO
-    val tiles: MutableList<MutableList<Int>> = MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
+    val tiles: MutableList<MutableList<Int>> = tiles ?: MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
 
     private lateinit var renderTarget: RenderTarget
 
@@ -56,7 +56,7 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
         regenerateRenderTarget(initFun)
     }
 
-    fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
+    private fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
         initFun()
         (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
