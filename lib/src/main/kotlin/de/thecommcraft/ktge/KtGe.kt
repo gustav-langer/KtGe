@@ -9,8 +9,11 @@ import org.openrndr.math.Vector2
 typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias SpriteCode = BuildFun<Sprite>
 
-interface Drawable {
+interface ToInitialize {
     fun init(parent: SpriteHost, program: Program)
+}
+
+interface Drawable : ToInitialize {
     fun update()
     fun draw()
 }
@@ -102,6 +105,7 @@ interface KtgeApp : Program, SpriteHost
 // Main
 fun ktge(
     sprites: List<Drawable>,
+    initialize: List<ToInitialize> = listOf(),
     config: BuildFun<Configuration> = {},
     background: ColorRGBa? = ColorRGBa.BLACK,
     frameRate: Long = 60L
@@ -129,6 +133,7 @@ fun ktge(
         }
 
         sprites.forEach(appImpl::createSprite)
+        initialize.forEach { it.init(appImpl, appImpl) }
 
         backgroundColor = background
 
@@ -145,8 +150,6 @@ fun ktge(
             }
             for (spr in spritesActual) {
                 spr.update()
-            }
-            for (spr in spritesActual) {
                 spr.draw()
             }
         }
