@@ -3,12 +3,12 @@ package de.thecommcraft.ktge
 import org.openrndr.Program
 import org.openrndr.draw.RenderTarget
 import org.openrndr.draw.renderTarget
+import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 
-class TileGrid(
-    val tileSize: Int, val gridWidth: Int, val gridHeight: Int = gridWidth, private val initFun: BuildFun<TileGrid> = {}
-) : Drawable {
+class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, private val initFun: BuildFun<TileGrid> = {}) :
+    Drawable {
     lateinit var program: Program
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
@@ -36,6 +36,14 @@ class TileGrid(
         runOnChange.forEach { it() }
     }
 
+    fun loadNew(width: Int, height: Int, tiles: MutableList<MutableList<Int>>) {
+        gridWidth = width
+        gridHeight = height
+        this.tiles.removeIf { true }
+        tiles.forEach(this.tiles::add)
+        regenerateRenderTarget()
+    }
+
     private fun drawTile(gridX: Int, gridY: Int) {
         program.drawer.withTarget(renderTarget) {
             val position = (IntVector2(gridX, gridY) * tileSize).vector2
@@ -45,12 +53,16 @@ class TileGrid(
 
     override fun init(parent: SpriteHost, program: Program) {
         this.program = program
+        regenerateRenderTarget(initFun)
+    }
+
+    fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
         initFun()
         (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
     }
 
-    fun onChange(changeFun: TileGrid.() -> Unit) {
+    fun onChange(changeFun: TileGrid.() -> Unit): Unit {
         runOnChange.add(changeFun)
     }
 
