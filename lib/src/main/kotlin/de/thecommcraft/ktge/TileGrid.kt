@@ -54,6 +54,10 @@ class TileGrid(
         runOnChange.add(changeFun)
     }
 
+    fun <E> on(event: Event<E>, code: TileGrid.(E) -> Unit) {
+        event.listen { code(it) }
+    }
+
     override fun update() {
         for (f in runEachFrame) f()
     }
