@@ -10,6 +10,7 @@ import org.openrndr.math.Vector2
 class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
     Drawable {
     lateinit var program: Program
+    lateinit var app: KtgeApp
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
     private val runEachFrame: MutableList<BuildFun<TileGrid>> = mutableListOf()
@@ -51,8 +52,9 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
         }
     }
 
-    override fun init(parent: SpriteHost, program: Program) {
+    override fun init(parent: SpriteHost, program: Program, app: KtgeApp) {
         this.program = program
+        this.app = app
         regenerateRenderTarget(initFun)
     }
 

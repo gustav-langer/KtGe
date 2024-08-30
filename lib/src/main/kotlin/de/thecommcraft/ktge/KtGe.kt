@@ -10,7 +10,7 @@ typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
 typealias SpriteCode = BuildFun<Sprite>
 
 interface ToInitialize {
-    fun init(parent: SpriteHost, program: Program)
+    fun init(parent: SpriteHost, program: Program, app: KtgeApp)
 }
 
 interface Drawable : ToInitialize {
@@ -27,6 +27,7 @@ interface SpriteHost {
 abstract class Sprite : Drawable, SpriteHost {
     lateinit var parent: SpriteHost
     lateinit var program: Program
+    lateinit var app: KtgeApp
 
     var position: Vector2 = Vector2.ZERO
     var costumeIdx: Int = 0
@@ -60,9 +61,10 @@ abstract class Sprite : Drawable, SpriteHost {
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
     protected abstract fun initSprite()
-    override fun init(parent: SpriteHost, program: Program) {
+    override fun init(parent: SpriteHost, program: Program, app: KtgeApp) {
         this.parent = parent
         this.program = program
+        this.app = app
         initSprite()
     }
 
@@ -81,7 +83,7 @@ abstract class Sprite : Drawable, SpriteHost {
 
     override fun createSprite(sprite: Drawable) {
         childSprites.add(sprite)
-        sprite.init(this, program)
+        sprite.init(this, program, app)
     }
 
     override fun removeSprite(sprite: Drawable) {
@@ -120,7 +122,7 @@ fun ktge(
         val appImpl = object : KtgeApp, Program by this {
             override fun createSprite(sprite: Drawable) {
                 spritesActual.add(sprite)
-                sprite.init(this, this)
+                sprite.init(this, this, this)
             }
 
             override fun removeSprite(sprite: Drawable) {
@@ -133,7 +135,7 @@ fun ktge(
         }
 
         sprites.forEach(appImpl::createSprite)
-        initialize.forEach { it.init(appImpl, appImpl) }
+        initialize.forEach { it.init(appImpl, appImpl, appImpl) }
 
         backgroundColor = background
 
