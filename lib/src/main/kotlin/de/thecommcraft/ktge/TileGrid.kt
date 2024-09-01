@@ -6,6 +6,7 @@ import org.openrndr.draw.renderTarget
 import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
+import org.openrndr.shape.Rectangle
 
 class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
     Drawable {
@@ -20,6 +21,8 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
     val tiles: MutableList<MutableList<Int>> = tiles ?: MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
 
     private lateinit var renderTarget: RenderTarget
+
+    var rect = Rectangle(0.0, 0.0, gridWidth.toDouble(), gridHeight.toDouble())
 
     fun tileType(id: Int, costume: Costume) {
         tileTypes[id] = costume
@@ -43,6 +46,8 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
         this.tiles.removeIf { true }
         tiles.forEach(this.tiles::add)
         regenerateRenderTarget()
+        runOnChange.forEach { it() }
+        rect = Rectangle(0.0, 0.0, gridWidth.toDouble(), gridHeight.toDouble())
     }
 
     private fun drawTile(gridX: Int, gridY: Int) {
