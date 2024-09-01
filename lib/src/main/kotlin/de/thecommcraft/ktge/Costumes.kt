@@ -9,19 +9,19 @@ interface Costume {
     fun draw(program: Program, position: Vector2)
 }
 
-class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
+open class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
     override fun draw(program: Program, position: Vector2) {
         program.code(position)
     }
 }
 
-class ImageCostume(
+open class ImageCostume(
     img: ColorBuffer,
     val drawerConfig: BuildFun<Drawer> = {},
     scale: Int = 1,
     scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
 ) : Costume {
-    private val buf = colorBuffer(img.width * scale, img.height * scale)
+    val buf = colorBuffer(img.width * scale, img.height * scale)
 
     init {
         img.copyTo(
@@ -38,7 +38,7 @@ class ImageCostume(
     }
 }
 
-class TextCostume(val text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
+open class TextCostume(val text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig()
         drawer.fontMap = font

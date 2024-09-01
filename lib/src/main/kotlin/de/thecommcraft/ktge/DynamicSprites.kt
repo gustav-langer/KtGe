@@ -34,7 +34,7 @@ abstract class DynamicSpriteState(
     abstract fun draw(program: Program)
 }
 
-class CostumeData(var costumes: CostumeList, var costumeIdx: Int = 0)
+open class CostumeData(var costumes: CostumeList, var costumeIdx: Int = 0)
 
 abstract class DynamicSpriteGroup<T : DynamicSpriteState> : Drawable {
     protected val dynamicSpriteStates: MutableMap<Int, T> = mutableMapOf()

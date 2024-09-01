@@ -9,7 +9,7 @@ interface AudioPlayable {
     fun stop()
 }
 
-class Audio(file: File) : AudioPlayable, AutoCloseable {
+open class Audio(file: File) : AudioPlayable, AutoCloseable {
     private val _audioClip: Clip = AudioSystem.getClip()
 
     init {
@@ -61,7 +61,7 @@ class AudioGroup(
     }
 }
 
-class AudioGroupBuilder {
+open class AudioGroupBuilder {
     private val _audios: MutableList<AudioPlayable> = mutableListOf()
     private val _audioNames: MutableMap<String, Int> = mutableMapOf()
 
@@ -76,7 +76,8 @@ class AudioGroupBuilder {
         _audios.add(audio)
     }
 
-    fun build(): AudioGroup = AudioGroup(audios = _audios, audioNames = _audioNames)
+    fun build(): AudioGroup =
+        AudioGroup(audios = _audios, audioNames = _audioNames)
 }
 
 fun audioGroup(init: BuildFun<AudioGroupBuilder>): AudioGroup {

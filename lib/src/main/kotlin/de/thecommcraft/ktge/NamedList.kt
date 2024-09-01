@@ -13,7 +13,8 @@ interface NamedList<E, N : Any> : List<E> {
 
 interface MutableNamedList<E, N : Any> : NamedList<E, N>, MutableList<E> {
     fun add(element: E, name: N): Boolean
-    fun addNullable(element: E, name: N?): Boolean = if (name == null) add(element) else add(element, name)
+    fun addNullable(element: E, name: N?): Boolean =
+        if (name == null) add(element) else add(element, name)
 
     fun toImmutable(): NamedList<E, N>
 }
@@ -21,7 +22,7 @@ interface MutableNamedList<E, N : Any> : NamedList<E, N>, MutableList<E> {
 private fun <N : Any> biMapFromList(names: List<N?>): MutableBiMap<N, Int> =
     HashBiMap.create(names.mapIndexedNotNull { index: Int, name: N? -> name?.let { it to index } }.toMap())
 
-class MapNamedList<E, N : Any>(private val items: List<E>, private val names: BiMap<N, Int>) : NamedList<E, N>,
+open class MapNamedList<E, N : Any>(private val items: List<E>, private val names: BiMap<N, Int>) : NamedList<E, N>,
     List<E> by items {
     constructor(items: List<E>, names: List<N?>) : this(items, biMapFromList(names))
 
@@ -33,7 +34,7 @@ class MapNamedList<E, N : Any>(private val items: List<E>, private val names: Bi
     override fun indexOfName(name: N): Int? = names[name]
 }
 
-class MapMutableNamedList<E, N : Any>(private val items: MutableList<E>, private val names: MutableBiMap<N, Int>) :
+open class MapMutableNamedList<E, N : Any>(private val items: MutableList<E>, private val names: MutableBiMap<N, Int>) :
     MutableNamedList<E, N>, MutableList<E> by items {
     constructor(items: MutableList<E>, names: List<N?>) : this(items, biMapFromList(names))
 
