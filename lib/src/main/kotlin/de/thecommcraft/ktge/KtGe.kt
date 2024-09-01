@@ -102,7 +102,11 @@ abstract class Sprite : Drawable, SpriteHost {
     }
 }
 
-interface KtgeApp : Program, SpriteHost
+interface KtgeApp : Program, SpriteHost {
+    fun getTotalDepth(): Int
+
+    fun setDepth(sprite: Drawable, depth: Int)
+}
 
 // Main
 fun ktge(
@@ -132,6 +136,15 @@ fun ktge(
             override fun removeSprites(predicate: (Drawable) -> Boolean) {
                 spritesActual.removeIf(predicate)
             }
+
+            override fun getTotalDepth(): Int {
+                return spritesActual.size
+            }
+
+            override fun setDepth(sprite: Drawable, depth: Int) {
+                removeSprite(sprite)
+                spritesActual.add(getTotalDepth() - depth, sprite)
+            }
         }
 
         sprites.forEach(appImpl::createSprite)
@@ -152,6 +165,8 @@ fun ktge(
             }
             for (spr in spritesActual) {
                 spr.update()
+            }
+            for (spr in spritesActual) {
                 spr.draw()
             }
         }
