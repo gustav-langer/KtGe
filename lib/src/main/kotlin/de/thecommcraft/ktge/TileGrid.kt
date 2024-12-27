@@ -2,13 +2,14 @@ package de.thecommcraft.ktge
 
 import org.openrndr.Program
 import org.openrndr.draw.RenderTarget
+import org.openrndr.draw.isolatedWithTarget
 import org.openrndr.draw.renderTarget
 import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 
-class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
+open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
     Drawable {
     lateinit var program: Program
     lateinit var app: KtgeApp
@@ -40,6 +41,14 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
         runOnChange.forEach { it() }
     }
 
+    fun copyTo(tileGrid: TileGrid) {
+        tileGrid.loadFrom(this)
+    }
+
+    fun loadFrom(tileGrid: TileGrid) {
+        loadNew(tileGrid.gridWidth, tileGrid.gridHeight, (tileGrid.tiles.map { it.toMutableList() }).toMutableList())
+    }
+
     fun loadNew(width: Int, height: Int, tiles: MutableList<MutableList<Int>>) {
         gridWidth = width
         gridHeight = height
@@ -51,7 +60,8 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
     }
 
     private fun drawTile(gridX: Int, gridY: Int) {
-        program.drawer.withTarget(renderTarget) {
+        program.drawer.isolatedWithTarget(renderTarget) {
+            program.drawer.ortho(renderTarget)
             val position = (IntVector2(gridX, gridY) * tileSize).vector2
             tileTypes[tiles[gridX][gridY]]?.draw(program, position)
         }
@@ -61,10 +71,15 @@ class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWi
         this.program = program
         this.app = app
         regenerateRenderTarget(initFun)
+        program.run {
+            window.sized.listen {
+                program.drawer.ortho(renderTarget)
+            }
+        }
     }
 
     private fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
-        renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight) { colorBuffer() }
+        renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight, 1.0) { colorBuffer() }
         initFun()
         (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
     }
