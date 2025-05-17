@@ -4,6 +4,20 @@ import org.openrndr.Program
 import org.openrndr.draw.*
 import org.openrndr.math.Vector2
 import org.openrndr.shape.IntRectangle
+import java.nio.file.Path
+import java.io.File
+
+fun loadImage(path: Path): ColorBuffer {
+    return loadImage(path.toFile())
+}
+
+suspend fun loadImageSuspend(path: Path): ColorBuffer {
+    return loadImageSuspend(path.toString())
+}
+
+suspend fun loadImageSuspend(file: File): ColorBuffer {
+    return loadImageSuspend(file.toString())
+}
 
 interface Costume {
     fun draw(program: Program, position: Vector2)
