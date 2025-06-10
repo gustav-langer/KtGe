@@ -17,6 +17,10 @@ interface PositionedCollider : Collider {
     var position: Vector2
 }
 
+data class Projection(val min: Double, val max: Double) {
+    fun overlaps(other: Projection): Boolean = this.max > other.min && other.max > this.min
+}
+
 open class BoxCollider(
     val width: Double,
     val height: Double,
@@ -48,6 +52,12 @@ open class BoxCollider(
 
     open fun asRotated(): RotatedRectangleCollider =
         RotatedRectangleCollider(width, height, position)
+
+    open fun project(axis: Vector2): Projection {
+        val centerProjection = this.position.dot(axis)
+        val radiusProjection = (this.width / 2.0) * abs(axis.x) + (this.height / 2.0) * abs(axis.y)
+        return Projection(centerProjection - radiusProjection, centerProjection + radiusProjection)
+    }
 }
 
 open class CircleCollider(
@@ -131,11 +141,20 @@ class RotatedRectangleCollider(
         return true
     }
 
-    private data class Projection(val min: Double, val max: Double) {
-        fun overlaps(other: Projection): Boolean = this.max > other.min && other.max > this.min
+    override fun collides(other: BoxCollider): Boolean {
+        val allAxes = axes + listOf(Vector2.UNIT_X, Vector2.UNIT_Y)
+
+        for (axis in allAxes) {
+            val p1 = project(axis)
+            val p2 = other.project(axis)
+            if (!p1.overlaps(p2)) {
+                return false
+            }
+        }
+        return true
     }
 
-    private fun project(axis: Vector2): Projection {
+    override fun project(axis: Vector2): Projection {
         val projections = vertices.map { it.dot(axis) }
         return Projection(projections.minOrNull()!!, projections.maxOrNull()!!)
     }
