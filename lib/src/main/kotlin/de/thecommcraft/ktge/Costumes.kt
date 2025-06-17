@@ -62,7 +62,7 @@ open class TextCostume(var text: String, val font: FontMap, val drawerConfig: Bu
     }
 }
 
-open class MultiLineTextCostume(var text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>, var size: Vector2) : Costume {
+open class MultiLineTextCostume(var text: String, val font: FontMap, var size: Vector2, val drawerConfig: BuildFun<Drawer>) : Costume {
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig()
         drawer.fontMap = font
