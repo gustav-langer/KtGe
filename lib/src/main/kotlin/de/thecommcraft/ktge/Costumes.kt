@@ -4,6 +4,8 @@ import org.openrndr.Program
 import org.openrndr.draw.*
 import org.openrndr.math.Vector2
 import org.openrndr.shape.IntRectangle
+import org.openrndr.shape.Rectangle
+import org.openrndr.writer
 import java.nio.file.Path
 import java.io.File
 
@@ -52,10 +54,25 @@ open class ImageCostume(
     }
 }
 
-open class TextCostume(val text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
+open class TextCostume(var text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig()
         drawer.fontMap = font
         drawer.text(text, position)
+    }
+}
+
+open class MultiLineTextCostume(var text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>, var size: Vector2) : Costume {
+    override fun draw(program: Program, position: Vector2) = program.run {
+        drawer.drawerConfig()
+        drawer.fontMap = font
+        writer {
+            box = Rectangle(position, size.x, size.y)
+            val lines = text.lines()
+            lines.forEach {
+                text(it)
+                newLine()
+            }
+        }
     }
 }
