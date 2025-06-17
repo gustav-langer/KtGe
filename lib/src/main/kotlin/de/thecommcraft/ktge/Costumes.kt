@@ -70,8 +70,8 @@ open class MultiLineTextCostume(var text: String, val font: FontMap, var size: V
             box = Rectangle(position, size.x, size.y)
             val lines = text.lines()
             lines.forEach {
-                newLine()
                 text(it)
+                newLine()
             }
         }
     }
