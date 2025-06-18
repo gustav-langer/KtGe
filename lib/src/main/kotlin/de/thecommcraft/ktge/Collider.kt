@@ -22,8 +22,8 @@ data class Projection(val min: Double, val max: Double) {
 }
 
 open class BoxCollider(
-    val width: Double,
-    val height: Double,
+    var width: Double,
+    var height: Double,
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
@@ -61,7 +61,7 @@ open class BoxCollider(
 }
 
 open class CircleCollider(
-    val radius: Double,
+    var radius: Double,
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
@@ -166,7 +166,7 @@ class RotatedRectangleCollider(
 
 
 class PolyPositionedCollider(
-    private val subColliders: Iterable<PositionedCollider>,
+    private var subColliders: List<PositionedCollider>,
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
