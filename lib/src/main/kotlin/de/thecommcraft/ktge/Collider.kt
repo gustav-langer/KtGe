@@ -27,6 +27,10 @@ open class BoxCollider(
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
+    companion object {
+        val EMPTY = BoxCollider(0.0, 0.0)
+    }
+
     override var position: Vector2 = initialPosition
 
     val rectangle: Rectangle
@@ -65,6 +69,10 @@ open class CircleCollider(
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
+    companion object {
+        val EMPTY = CircleCollider(0.0)
+    }
+
     override var position: Vector2 = initialPosition
 
     val circle: Circle
@@ -99,6 +107,10 @@ class RotatedRectangleCollider(
     initialPosition: Vector2 = Vector2.ZERO,
     var rotation: Double = 0.0
 ) : BoxCollider(width, height, initialPosition) {
+
+    companion object {
+        val EMPTY = RotatedRectangleCollider(0.0, 0.0)
+    }
 
     private val vertices: List<Vector2>
         get() {
@@ -170,6 +182,10 @@ class PolyPositionedCollider(
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
+    companion object {
+        val EMPTY = PolyPositionedCollider(listOf())
+    }
+
     override var position: Vector2 = initialPosition
 
     override fun collides(other: Collider): Boolean {
@@ -181,6 +197,11 @@ class PolyPositionedCollider(
 }
 
 class EmptyCollider(initialPosition: Vector2 = Vector2.ZERO) : PositionedCollider {
+
+    companion object {
+        val EMPTY = EmptyCollider()
+    }
+
     override var position: Vector2 = initialPosition
     override fun collides(other: Collider): Boolean = false
 }
