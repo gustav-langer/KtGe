@@ -101,7 +101,8 @@ open class CircleCollider(
 }
 
 
-class RotatedRectangleCollider(
+
+open class RotatedRectangleCollider(
     width: Double,
     height: Double,
     initialPosition: Vector2 = Vector2.ZERO,
@@ -176,14 +177,48 @@ class RotatedRectangleCollider(
     }
 }
 
+open class DisplacedPositionedCollider(private val collider: PositionedCollider, var offset: Vector2 = Vector2.ZERO, initialPosition: Vector2 = Vector2.ZERO) : PositionedCollider {
+    companion object {
+        val EMPTY = DisplacedPositionedCollider(EmptyCollider())
+    }
 
-class PolyPositionedCollider(
-    private var subColliders: List<PositionedCollider>,
+    override var position: Vector2 = initialPosition
+
+    override fun collides(other: Collider): Boolean {
+        collider.position = position - offset
+        return collider.collides(other)
+    }
+}
+
+infix fun PositionedCollider.offset(offset: Vector2): DisplacedPositionedCollider {
+    return DisplacedPositionedCollider(this, offset)
+}
+
+open class InvertedPositionedCollider(private val collider: PositionedCollider, initialPosition: Vector2 = Vector2.ZERO) : PositionedCollider {
+    companion object {
+        val EMPTY = InvertedPositionedCollider(InvertedPositionedCollider(EmptyCollider()))
+    }
+
+    override var position: Vector2 = initialPosition
+
+    override fun collides(other: Collider): Boolean {
+        collider.position = position
+        return !collider.collides(other)
+    }
+}
+
+operator fun PositionedCollider.not(): InvertedPositionedCollider {
+    return InvertedPositionedCollider(this)
+}
+
+open class PolyPositionedCollider(
+    val subColliders: MutableList<PositionedCollider>,
+    val requiredColliders: MutableList<PositionedCollider> = mutableListOf(),
     initialPosition: Vector2 = Vector2.ZERO
 ) : PositionedCollider {
 
     companion object {
-        val EMPTY = PolyPositionedCollider(listOf())
+        val EMPTY = PolyPositionedCollider(mutableListOf())
     }
 
     override var position: Vector2 = initialPosition
@@ -192,11 +227,104 @@ class PolyPositionedCollider(
         return subColliders.any { subCollider ->
             subCollider.position = this.position
             subCollider.collides(other)
+        } && requiredColliders.all { subCollider ->
+            subCollider.position = this.position
+            subCollider.collides(other)
         }
     }
 }
 
-class EmptyCollider(initialPosition: Vector2 = Vector2.ZERO) : PositionedCollider {
+interface AnyColliderBuilder<T> {
+    fun collider(collider: PositionedCollider): Unit
+    fun collider(colliderBuildFun: BuildFun<T>): Unit
+    fun invertedCollider(collider: PositionedCollider): Unit
+    fun invertedCollider(colliderBuildFun: BuildFun<T>): Unit
+    fun required(collider: PositionedCollider): Unit
+    fun required(colliderBuildFun: BuildFun<T>): Unit
+    fun invertedRequired(collider: PositionedCollider): Unit
+    fun invertedRequired(colliderBuildFun: BuildFun<T>): Unit
+    fun build(): PolyPositionedCollider
+}
+
+open class ColliderBuilder(private val buildFun: BuildFun<ColliderBuilder>) : AnyColliderBuilder<ColliderBuilder> {
+    private val colliders: MutableList<PositionedCollider> = mutableListOf()
+    private val colliderBuilders: MutableList<ColliderBuilder> = mutableListOf()
+    private val invertedColliders: MutableList<PositionedCollider> = mutableListOf()
+    private val invertedColliderBuilders: MutableList<ColliderBuilder> = mutableListOf()
+    private val requiredColliders: MutableList<PositionedCollider> = mutableListOf()
+    private val requiredColliderBuilders: MutableList<ColliderBuilder> = mutableListOf()
+    private val invertedRequiredColliders: MutableList<PositionedCollider> = mutableListOf()
+    private val invertedRequiredColliderBuilders: MutableList<ColliderBuilder> = mutableListOf()
+    private var built: Boolean = false
+    protected fun checkNotBuilt(): Unit {
+        check(!built) { "Builder must not be used after being built." }
+    }
+    override fun collider(collider: PositionedCollider): Unit {
+        checkNotBuilt()
+        colliders.add(collider)
+    }
+
+    override fun collider(colliderBuildFun: BuildFun<ColliderBuilder>): Unit {
+        checkNotBuilt()
+        colliderBuilders.add(ColliderBuilder(colliderBuildFun))
+    }
+
+    override fun invertedCollider(collider: PositionedCollider): Unit {
+        checkNotBuilt()
+        invertedColliders.add(collider)
+    }
+
+    override fun invertedCollider(colliderBuildFun: BuildFun<ColliderBuilder>): Unit {
+        checkNotBuilt()
+        invertedColliderBuilders.add(ColliderBuilder(colliderBuildFun))
+    }
+
+    override fun required(collider: PositionedCollider): Unit {
+        checkNotBuilt()
+        requiredColliders.add(collider)
+    }
+
+    override fun required(colliderBuildFun: BuildFun<ColliderBuilder>): Unit {
+        checkNotBuilt()
+        requiredColliderBuilders.add(ColliderBuilder(colliderBuildFun))
+    }
+
+    override fun invertedRequired(collider: PositionedCollider): Unit {
+        checkNotBuilt()
+        invertedRequiredColliders.add(collider)
+    }
+
+    override fun invertedRequired(colliderBuildFun: BuildFun<ColliderBuilder>): Unit {
+        checkNotBuilt()
+        invertedRequiredColliderBuilders.add(ColliderBuilder(colliderBuildFun))
+    }
+
+    override fun build(): PolyPositionedCollider {
+        checkNotBuilt()
+        built = true
+        colliderBuilders.forEach {
+            colliders.add(it.build())
+        }
+        invertedColliderBuilders.forEach {
+            invertedColliders.add(it.build())
+        }
+        requiredColliderBuilders.forEach {
+            requiredColliders.add(it.build())
+        }
+        invertedRequiredColliderBuilders.forEach {
+            invertedRequiredColliders.add(it.build())
+        }
+        colliders.addAll(invertedColliders.map(::InvertedPositionedCollider))
+        requiredColliders.addAll(invertedRequiredColliders.map(::InvertedPositionedCollider))
+        return PolyPositionedCollider(colliders, requiredColliders)
+    }
+}
+
+fun collider(buildFun: BuildFun<ColliderBuilder>): PolyPositionedCollider {
+    return ColliderBuilder(buildFun).build()
+}
+
+open class EmptyCollider(initialPosition: Vector2 = Vector2.ZERO) : PositionedCollider {
 
     companion object {
         val EMPTY = EmptyCollider()
