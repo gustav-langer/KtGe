@@ -6,6 +6,7 @@ import org.openrndr.shape.Rectangle
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
 import kotlin.math.*
+import kotlin.reflect.KProperty
 
 private fun Double.squared(): Double = this * this
 
@@ -17,12 +18,24 @@ typealias vecDelegate = ReadWriteProperty<Any?, Vector2>
 
 inline fun zeroVecDelegate(): vecDelegate = unobservedDelegate(Vector2.ZERO)
 
+inline fun positionedDelegate(positioned: Positioned): vecDelegate {
+    return object : vecDelegate {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): Vector2 {
+            return positioned.position
+        }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Vector2) {
+            positioned.position = value
+        }
+    }
+}
+
 interface Collider {
     fun collides(other: Collider): Boolean
 }
 
-abstract class PositionedCollider(pos: vecDelegate) : Collider {
-    var position: Vector2 by pos
+abstract class PositionedCollider(pos: vecDelegate) : Collider, Positioned {
+    override var position: Vector2 by pos
 }
 
 data class Projection(val min: Double, val max: Double) {
@@ -34,6 +47,8 @@ open class BoxCollider(
     var height: Double,
     pos: vecDelegate = zeroVecDelegate()
 ) : PositionedCollider(pos) {
+
+    constructor(width: Double, height: Double, parent: Positioned) : this(width, height, positionedDelegate(parent))
 
     constructor(width: Double, height: Double, position: Vector2) : this(width, height, unobservedDelegate(position))
 
@@ -77,6 +92,8 @@ open class CircleCollider(
     pos: vecDelegate = zeroVecDelegate()
 ) : PositionedCollider(pos) {
 
+    constructor(radius: Double, parent: Positioned) : this(radius, positionedDelegate(parent))
+
     constructor(radius: Double, position: Vector2) : this(radius, unobservedDelegate(position))
 
     companion object {
@@ -116,6 +133,8 @@ open class RotatedRectangleCollider(
     pos: vecDelegate = zeroVecDelegate(),
     var rotation: Double = 0.0
 ) : BoxCollider(width, height, pos) {
+
+    constructor(width: Double, height: Double, parent: Positioned, rotation: Double = 0.0) : this(width, height, positionedDelegate(parent), rotation)
 
     constructor(width: Double, height: Double, position: Vector2, rotation: Double = 0.0) : this(width, height, unobservedDelegate(position), rotation)
 
@@ -189,6 +208,8 @@ open class RotatedRectangleCollider(
 
 open class DisplacedPositionedCollider(private val collider: PositionedCollider, var offset: Vector2 = Vector2.ZERO, pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
 
+    constructor(collider: PositionedCollider, offset: Vector2, parent: Positioned) : this(collider, offset, positionedDelegate(parent))
+
     constructor(collider: PositionedCollider, offset: Vector2, position: Vector2) : this(collider, offset, unobservedDelegate(position))
 
     companion object {
@@ -206,6 +227,11 @@ infix fun PositionedCollider.offset(offset: Vector2): DisplacedPositionedCollide
 }
 
 open class InvertedPositionedCollider(private val collider: PositionedCollider, pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
+
+    constructor(collider: PositionedCollider, parent: Positioned) : this(collider, positionedDelegate(parent))
+
+    constructor(collider: PositionedCollider, position: Vector2) : this(collider, unobservedDelegate(position))
+
     companion object {
         val EMPTY = InvertedPositionedCollider(InvertedPositionedCollider(EmptyCollider()))
     }
@@ -226,16 +252,20 @@ open class PolyPositionedCollider(
     pos: vecDelegate = zeroVecDelegate()
 ) : PositionedCollider(pos) {
 
+    constructor(subColliders: MutableList<PositionedCollider>, requiredColliders: MutableList<PositionedCollider> = mutableListOf(), parent: Positioned) : this(subColliders, requiredColliders, positionedDelegate(parent))
+
+    constructor(subColliders: MutableList<PositionedCollider>, requiredColliders: MutableList<PositionedCollider> = mutableListOf(), position: Vector2) : this(subColliders, requiredColliders, unobservedDelegate(position))
+
     companion object {
         val EMPTY = PolyPositionedCollider(mutableListOf())
     }
 
     override fun collides(other: Collider): Boolean {
         return subColliders.any { subCollider ->
-            subCollider.position = this.position
+            if (subCollider.position != position) subCollider.position = position
             subCollider.collides(other)
         } && requiredColliders.all { subCollider ->
-            subCollider.position = this.position
+            if (subCollider.position != position) subCollider.position = position
             subCollider.collides(other)
         }
     }
@@ -332,6 +362,10 @@ fun collider(buildFun: BuildFun<ColliderBuilder>): PolyPositionedCollider {
 }
 
 open class EmptyCollider(pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
+
+    constructor(parent: Positioned) : this(positionedDelegate(parent))
+
+    constructor(position: Vector2) : this(unobservedDelegate(position))
 
     companion object {
         val EMPTY = EmptyCollider()

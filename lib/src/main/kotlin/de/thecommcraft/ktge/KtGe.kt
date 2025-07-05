@@ -13,6 +13,10 @@ interface ToInitialize {
     fun init(parent: SpriteHost, program: Program, app: KtgeApp)
 }
 
+interface Positioned {
+    var position: Vector2
+}
+
 interface Drawable : ToInitialize {
     fun update()
     fun draw()
@@ -24,12 +28,12 @@ interface SpriteHost {
     fun removeSprites(predicate: (Drawable) -> Boolean)
 }
 
-abstract class Sprite : Drawable, SpriteHost {
+abstract class Sprite : Drawable, SpriteHost, Positioned {
     lateinit var parent: SpriteHost
     lateinit var program: Program
     lateinit var app: KtgeApp
 
-    var position: Vector2 = Vector2.ZERO
+    override var position: Vector2 = Vector2.ZERO
     var costumeIdx: Int = 0
     var costumeName: String?
         get() = costumes.nameOf(costumeIdx)
