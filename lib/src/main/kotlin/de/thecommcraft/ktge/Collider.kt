@@ -13,7 +13,7 @@ inline fun <T>unobservedDelegate(initialValue: T): ReadWriteProperty<Any?, T> {
     return observable(initialValue) { _, _, _ -> }
 }
 
-typealias vecDelegate = ReadWriteProperty<PositionedCollider, Vector2>
+typealias vecDelegate = ReadWriteProperty<Any?, Vector2>
 
 inline fun zeroVecDelegate(): vecDelegate = unobservedDelegate(Vector2.ZERO)
 
@@ -32,7 +32,7 @@ data class Projection(val min: Double, val max: Double) {
 open class BoxCollider(
     var width: Double,
     var height: Double,
-    pos: ReadWriteProperty<PositionedCollider, Vector2> = zeroVecDelegate()
+    pos: vecDelegate = zeroVecDelegate()
 ) : PositionedCollider(pos) {
 
     constructor(width: Double, height: Double, position: Vector2) : this(width, height, unobservedDelegate(position))
