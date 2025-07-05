@@ -1,21 +1,11 @@
 body {
     font-family: Montserrat, sans-serif;
-    margin: none;
     color: #222;
-}
-.container {
-    margin: 2%;
-}
-h1 {
-    margin: 1%;
 }
 div.subheader {
     background-color: #53ff45;
-    margin-left: none;
-    margin-right: none;
+    max-width: fit-content;
 }
 div.subheader h2 {
     color: #111;
-    margin-left: 1%;
-    margin-right: 1%;
 }
