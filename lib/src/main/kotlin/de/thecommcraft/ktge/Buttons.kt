@@ -94,13 +94,13 @@ open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
 
     fun nextButton() {
         unselectButton()
-        buttonIdx = (buttonIdx + 1) % buttons.size
+        buttonIdx = (buttonIdx + 1).mod(buttons.size)
         selectButton()
     }
 
     fun previousButton() {
         unselectButton()
-        buttonIdx = (buttonIdx - 1) % buttons.size
+        buttonIdx = (buttonIdx - 1).mod(buttons.size)
         selectButton()
     }
 
