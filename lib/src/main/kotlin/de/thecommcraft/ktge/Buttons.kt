@@ -9,6 +9,8 @@ import kotlin.properties.Delegates
 class ButtonEvent {
     val down = Event<Unit>("down")
     val up = Event<Unit>("up")
+    val select = Event<Unit>("select")
+    val unselect = Event<Unit>("unselect")
 }
 abstract class BoxButton(val size: Vector2): Sprite() {
     var blocked by Delegates.observable(false) { _, old, new ->
@@ -18,6 +20,7 @@ abstract class BoxButton(val size: Vector2): Sprite() {
         }
     }
     var selected: Boolean = false
+        private set
     val hovering: Boolean
         get() {
             val d = (app.mouse.position - position)
@@ -50,6 +53,12 @@ abstract class BoxButton(val size: Vector2): Sprite() {
                 triggerUp()
             }
         }
+        on(event.select) {
+            selected = true
+        }
+        on(event.unselect) {
+            selected = false
+        }
         initButton()
     }
     open fun clickPredicate(ev: MouseEvent): Boolean {
@@ -76,11 +85,11 @@ open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
     }
 
     protected fun unselectButton() {
-        buttons[buttonIdx].selected = false
+        buttons[buttonIdx].event.unselect.trigger(Unit)
     }
 
     protected fun selectButton() {
-        buttons[buttonIdx].selected = true
+        buttons[buttonIdx].event.select.trigger(Unit)
     }
 
     fun nextButton() {
