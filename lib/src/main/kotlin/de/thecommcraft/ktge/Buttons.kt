@@ -70,6 +70,10 @@ open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
     protected open val buttons: MutableList<BoxButton> = mutableListOf()
     protected open var buttonIdx: Int = 0
 
+    var blocked: Boolean
+        get() = buttons.all { it.blocked }
+        set(value) { buttons.forEach { it.blocked = value } }
+
     override fun initSprite() {
         buildFun()
         assert(buttons.size > 0)
