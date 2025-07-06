@@ -1,6 +1,7 @@
 package de.thecommcraft.ktge
 import org.openrndr.MouseEvent
 import org.openrndr.MouseButton
+import org.openrndr.Program
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import kotlin.properties.Delegates
@@ -16,6 +17,7 @@ abstract class BoxButton(val size: Vector2): Sprite() {
             down = false
         }
     }
+    var selected: Boolean = false
     val hovering: Boolean
         get() {
             val d = (app.mouse.position - position)
@@ -52,5 +54,48 @@ abstract class BoxButton(val size: Vector2): Sprite() {
     }
     open fun clickPredicate(ev: MouseEvent): Boolean {
         return ev.button == MouseButton.LEFT
+    }
+}
+
+open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
+    protected open val buttons: MutableList<BoxButton> = mutableListOf()
+    protected open var buttonIdx: Int = 0
+
+    override fun initSprite() {
+        buildFun()
+        assert(buttons.size > 0)
+        selectButton()
+        initButtonList()
+    }
+
+    open fun initButtonList() {}
+
+    fun button(button: BoxButton) {
+        buttons.add(button)
+        createSprite(button)
+    }
+
+    protected fun unselectButton() {
+        buttons[buttonIdx].selected = false
+    }
+
+    protected fun selectButton() {
+        buttons[buttonIdx].selected = true
+    }
+
+    fun nextButton() {
+        unselectButton()
+        buttonIdx = (buttonIdx + 1) % buttons.size
+        selectButton()
+    }
+
+    fun previousButton() {
+        unselectButton()
+        buttonIdx = (buttonIdx - 1) % buttons.size
+        selectButton()
+    }
+
+    fun triggerButton() {
+        buttons[buttonIdx].manualTrigger()
     }
 }
