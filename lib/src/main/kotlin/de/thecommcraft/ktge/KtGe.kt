@@ -44,6 +44,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
                 }
             }
         }
+    val currentCostume: Costume?
+        get() = costumes.getOrNull(costumeIdx)
 
     private val costumes: MutableNamedList<Costume, String> = mutableNamedListOf()
     private val childSprites: MutableSet<Drawable> = mutableSetOf()
