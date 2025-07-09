@@ -56,13 +56,13 @@ fun WebsiteDir.generateIndexPage(): Unit {
                     }
                     """.trimIndent())
                 }
-                script {
-                    unsafe {
-                        +"""
-                        hljs.highlightAll();
-                        """.trimIndent()
-                    }
-                }
+//                script {
+//                    unsafe {
+//                        +"""
+//                        hljs.highlightAll();
+//                        """.trimIndent()
+//                    }
+//                }
             }
         }
     }
