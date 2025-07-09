@@ -102,6 +102,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.8.1")
     implementation("io.michaelrocks.bimap:bimap:1.1.0")
 
     implementation(libs.kotlinx.coroutines.core)
