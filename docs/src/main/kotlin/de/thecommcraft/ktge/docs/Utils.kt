@@ -76,3 +76,11 @@ fun FlowContent.ordinaryParagraph(text: String) {
         +text
     }
 }
+
+fun FlowContent.code(text: String, lang: String = "kotlin") {
+    pre {
+        code(classes = "language-${lang}") {
+            +text
+        }
+    }
+}

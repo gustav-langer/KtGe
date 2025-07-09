@@ -44,6 +44,17 @@ fun WebsiteDir.generateIndexPage(): Unit {
                     header("KtGe")
                     subHeader("a small game engine written in Kotlin")
                     ordinaryParagraph("This page will probably have some documentation in the future, but that still needs to be written.")
+                    code("""
+                    import kotlinx.html.*
+                    import kotlinx.html.stream.createHTML
+                    
+                    fun main() {
+                        return createHTML().html {
+                            head {}
+                            body {}
+                        }
+                    }
+                    """.trimIndent())
                 }
             }
         }
