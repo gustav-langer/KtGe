@@ -26,7 +26,17 @@ fun WebsiteDir.generateIndexPage(): Unit {
                 }
                 link {
                     rel = "stylesheet"
+                    href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css"
+                }
+                link {
+                    rel = "stylesheet"
                     href = "./style.css"
+                }
+                script {
+                    src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"
+                }
+                script {
+                    src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/go.min.js"
                 }
             }
             body {
@@ -48,6 +58,11 @@ fun WebsiteDir.generateIndexPage(): Unit {
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Protest+Strike&display=swap"
 rel="stylesheet">
 <link href="./style.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<!-- and it's easy to individually load additional languages -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/go.min.js"></script>
 </head>
 <body>
 <div class="container">
