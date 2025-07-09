@@ -1,11 +1,13 @@
 package de.thecommcraft.ktge
 
+import org.openrndr.draw.tint
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
 import kotlin.math.*
+import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 private fun Double.squared(): Double = this * this
@@ -372,4 +374,33 @@ open class EmptyCollider(pos: vecDelegate = zeroVecDelegate()) : PositionedColli
     }
 
     override fun collides(other: Collider): Boolean = false
+}
+
+open class PointCollider(pos: vecDelegate = zeroVecDelegate()) : BoxCollider(0.0, 0.0, pos) {
+
+    constructor(parent: Positioned) : this(positionedDelegate(parent))
+
+    constructor(position: Vector2) : this(unobservedDelegate(position))
+}
+
+// More performant collision API (probably)
+
+interface PrototypedCollidablePositionedDrawable : Positioned, Drawable {
+    val prototypeCollider: PositionedCollider
+}
+
+fun PrototypedCollidablePositionedDrawable.collides(other: Collider): Boolean {
+    prototypeCollider.position = position
+    return prototypeCollider.collides(other)
+}
+
+fun PrototypedCollidablePositionedDrawable.collides(other: PrototypedCollidablePositionedDrawable): Boolean {
+    prototypeCollider.position = position
+    other.prototypeCollider.position = other.position
+    return prototypeCollider.collides(other.prototypeCollider)
+}
+
+fun Collider.collides(other: PrototypedCollidablePositionedDrawable): Boolean {
+    other.prototypeCollider.position = other.position
+    return this.collides(other.prototypeCollider)
 }
