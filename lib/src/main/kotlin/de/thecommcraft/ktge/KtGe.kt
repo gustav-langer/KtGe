@@ -126,7 +126,6 @@ fun ktge(
 
     program {
         window.presentationMode = PresentationMode.MANUAL
-        var lastDraw = seconds
 
         val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
         val appImpl = object : KtgeApp, Program by this {
@@ -161,13 +160,12 @@ fun ktge(
         extend {
             launch {
                 val msPerFrame = 1000.0 / frameRate
-                val msSinceLastDraw = (seconds - lastDraw) * 1000
-                val d = (msPerFrame - msSinceLastDraw).toLong()
+                val msGoneBy = seconds.mod(msPerFrame / 1000.0) * 1000.0
+                val d = (msPerFrame - msGoneBy).toLong()
 
                 if (d > 0L) delay(d)
 
                 window.requestDraw()
-                lastDraw = seconds
             }
             for (spr in spritesActual) {
                 spr.update()
