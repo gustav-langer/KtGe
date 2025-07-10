@@ -162,12 +162,12 @@ fun ktge(
             launch {
                 val msPerFrame = 1000.0 / frameRate
                 val msSinceLastDraw = (seconds - lastDraw) * 1000
-                lastDraw = seconds
                 val d = (msPerFrame - msSinceLastDraw).toLong()
 
                 if (d > 0L) delay(d)
 
                 window.requestDraw()
+                lastDraw = seconds
             }
             for (spr in spritesActual) {
                 spr.update()
