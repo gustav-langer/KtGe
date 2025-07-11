@@ -52,6 +52,41 @@ interface BoxCollider : PositionedCollider {
     var width: Double
     var height: Double
     val rectangle: Rectangle
+    companion object {
+        class BoxColliderBuilder internal constructor() {
+            var width: Double = 0.0
+            var height: Double = 0.0
+            internal var positionVecDelegate: vecDelegate = unobservedDelegate(Vector2.ZERO)
+            var position: Vector2 by positionVecDelegate
+            var rectangle: Rectangle
+                get() = Rectangle.fromCenter(position, width, height)
+                set(value) {
+                    position = value.center
+                    width = value.width
+                    height = value.height
+                }
+            var parent: Positioned? = null
+                set(value) {
+                    value?.let { positionVecDelegate = positionedDelegate(it) }
+                    field = value
+                }
+            fun setPositionDelegate(vecDelegate: vecDelegate) {
+                positionVecDelegate = vecDelegate
+            }
+        }
+        fun build(buildFun: BuildFun<BoxColliderBuilder>): BoxCollider {
+            val builder = BoxColliderBuilder()
+            builder.buildFun()
+            return object : BoxCollider {
+                override val colliderPrototype = BoxColliderPrototype(builder.width, builder.height)
+                override var position: Vector2 by builder.positionVecDelegate
+                override val rectangle: Rectangle
+                    get() = colliderPrototype.correspondingRectangle(position)
+                override var width: Double by colliderPrototype::width
+                override var height: Double by colliderPrototype::height
+            }
+        }
+    }
 }
 
 fun BoxCollider.asRotated(rotation: Double = 0.0) {}
@@ -348,25 +383,3 @@ interface PointCollider : PositionedCollider
 
 fun pointColliderOf(position: Vector2): PointCollider =
     object : PointCollider, BoxCollider by boxColliderOf(0.0, 0.0, position) {}
-
-// More performant collision API (probably)
-
-interface PrototypedCollidablePositionedDrawable : Positioned, Drawable {
-    val prototypeCollider: PositionedCollider
-}
-
-fun PrototypedCollidablePositionedDrawable.collides(other: Collider): Boolean {
-    prototypeCollider.position = position
-    return prototypeCollider.collides(other)
-}
-
-fun PrototypedCollidablePositionedDrawable.collides(other: PrototypedCollidablePositionedDrawable): Boolean {
-    prototypeCollider.position = position
-    other.prototypeCollider.position = other.position
-    return prototypeCollider.collides(other.prototypeCollider)
-}
-
-fun Collider.collides(other: PrototypedCollidablePositionedDrawable): Boolean {
-    other.prototypeCollider.position = other.position
-    return this.collides(other.prototypeCollider)
-}
