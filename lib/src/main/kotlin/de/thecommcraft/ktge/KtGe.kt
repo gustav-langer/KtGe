@@ -120,7 +120,8 @@ fun ktge(
     initialize: List<ToInitialize> = listOf(),
     config: BuildFun<Configuration> = {},
     background: ColorRGBa? = ColorRGBa.BLACK,
-    frameRate: Long = 60L
+    frameRate: Long = 60L,
+    extensions: List<Extension> = listOf()
 ) = application {
     configure(config)
 
@@ -156,6 +157,8 @@ fun ktge(
         initialize.forEach { it.init(appImpl, appImpl, appImpl) }
 
         backgroundColor = background
+
+        extensions.forEach(::extend)
 
         extend {
             launch {
