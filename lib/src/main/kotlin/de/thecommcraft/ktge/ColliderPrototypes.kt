@@ -11,29 +11,26 @@ interface ColliderPrototype {
     }
 }
 
-interface ExplicitCollidableWithAnything {
+interface ExplicitCollidableWithAnyColliderPrototype {
     fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean
 }
 
-interface ExplicitCollidableWithBox {
+interface ExplicitCollidableWithBoxPrototype {
     fun collides(myPos: Vector2, other: BoxColliderPrototype, otherPos: Vector2): Boolean
 }
 
 open class BoxColliderPrototype(
     var width: Double,
     var height: Double
-) : ColliderPrototype, ExplicitCollidableWithBox {
-    companion object {
-        val EMPTY = BoxColliderPrototype(0.0, 0.0)
-    }
+) : ColliderPrototype, ExplicitCollidableWithBoxPrototype {
 
     fun correspondingRectangle(position: Vector2) = Rectangle.fromCenter(position, width, height)
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         when (other) {
             is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is ExplicitCollidableWithBox -> return other.collides(otherPos, this, myPos)
-            is ExplicitCollidableWithAnything -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithBoxPrototype -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
         }
         return super.collides(myPos, other, otherPos)
     }
@@ -48,8 +45,8 @@ open class BoxColliderPrototype(
         return true
     }
 
-    open fun asRotated(): RotatedRectangleColliderPrototype =
-        RotatedRectangleColliderPrototype(width, height)
+    open fun asRotated(): RotatedBoxColliderPrototype =
+        RotatedBoxColliderPrototype(width, height)
 
     open fun project(myPos: Vector2, axis: Vector2): Projection {
         val centerProjection = myPos.dot(axis)
@@ -58,16 +55,13 @@ open class BoxColliderPrototype(
     }
 }
 
-interface ExplicitCollidableWithCircle {
+interface ExplicitCollidableWithCirclePrototype {
     fun collides(myPos: Vector2, other: CircleColliderPrototype, otherPos: Vector2): Boolean
 }
 
 open class CircleColliderPrototype(
     var radius: Double
-) : ColliderPrototype, ExplicitCollidableWithCircle, ExplicitCollidableWithBox {
-    companion object {
-        val EMPTY = CircleColliderPrototype(0.0)
-    }
+) : ColliderPrototype, ExplicitCollidableWithCirclePrototype, ExplicitCollidableWithBoxPrototype {
 
     fun correspondingCircle(position: Vector2) = Circle(position, radius)
 
@@ -75,8 +69,8 @@ open class CircleColliderPrototype(
         when (other) {
             is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
             is CircleColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is ExplicitCollidableWithCircle -> return other.collides(otherPos, this, myPos)
-            is ExplicitCollidableWithAnything -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithCirclePrototype -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
         }
         return super.collides(myPos, other, otherPos)
     }
@@ -98,26 +92,23 @@ open class CircleColliderPrototype(
     }
 }
 
-interface ExplicitCollidableWithRotatedRectangle {
-    fun collides(myPos: Vector2, other: RotatedRectangleColliderPrototype, otherPos: Vector2): Boolean
+interface ExplicitCollidableWithRotatedBoxPrototype {
+    fun collides(myPos: Vector2, other: RotatedBoxColliderPrototype, otherPos: Vector2): Boolean
 }
 
-open class RotatedRectangleColliderPrototype(
+open class RotatedBoxColliderPrototype(
     width: Double,
     height: Double,
-    var rotation: Double = 0.0
-) : BoxColliderPrototype(width, height), ExplicitCollidableWithRotatedRectangle, ExplicitCollidableWithCircle {
-    companion object {
-        val EMPTY = RotatedRectangleColliderPrototype(0.0, 0.0)
-    }
+    var rotation: Rotation = Rotation.ZERO
+) : BoxColliderPrototype(width, height), ExplicitCollidableWithRotatedBoxPrototype, ExplicitCollidableWithCirclePrototype {
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         when (other) {
-            is RotatedRectangleColliderPrototype -> return this.collides(myPos, other, otherPos)
+            is RotatedBoxColliderPrototype -> return this.collides(myPos, other, otherPos)
             is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
             is CircleColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is ExplicitCollidableWithRotatedRectangle -> return other.collides(otherPos, this, myPos)
-            is ExplicitCollidableWithAnything -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithRotatedBoxPrototype -> return other.collides(otherPos, this, myPos)
+            is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
         }
         return super.collides(myPos, other, otherPos)
     }
@@ -128,7 +119,7 @@ open class RotatedRectangleColliderPrototype(
         return listOf(
             Vector2(-halfW, -halfH), Vector2(halfW, -halfH),
             Vector2(halfW, halfH), Vector2(-halfW, halfH)
-        ).map { it.rotate(rotation) + position }
+        ).map { it.rotate(degrees = rotation.degrees) + position }
     }
 
     private fun correspondingAxes(position: Vector2): List<Vector2> {
@@ -140,7 +131,7 @@ open class RotatedRectangleColliderPrototype(
     }
 
     override fun collides(myPos: Vector2, other: CircleColliderPrototype, otherPos: Vector2): Boolean {
-        val localCircleCenter = (otherPos - myPos).rotate(-rotation)
+        val localCircleCenter = (otherPos - myPos).rotate(degrees = -rotation.degrees)
 
         val closestPoint = Vector2(
             x = localCircleCenter.x.coerceIn(-width / 2.0, width / 2.0),
@@ -151,7 +142,7 @@ open class RotatedRectangleColliderPrototype(
         return distanceSq < other.radius.squared()
     }
 
-    override fun collides(myPos: Vector2, other: RotatedRectangleColliderPrototype, otherPos: Vector2): Boolean {
+    override fun collides(myPos: Vector2, other: RotatedBoxColliderPrototype, otherPos: Vector2): Boolean {
         val axes = correspondingAxes(myPos)
         val allAxes = axes + other.correspondingAxes(otherPos)
         val myVertices = correspondingVertices(myPos)
@@ -191,17 +182,12 @@ open class RotatedRectangleColliderPrototype(
         return Projection(projections.minOrNull()!!, projections.maxOrNull()!!)
     }
 
-    override fun asRotated(): RotatedRectangleColliderPrototype {
-        return RotatedRectangleColliderPrototype(width, height, rotation)
+    override fun asRotated(): RotatedBoxColliderPrototype {
+        return RotatedBoxColliderPrototype(width, height, rotation)
     }
 }
 
-open class DisplacedPositionedColliderPrototype(private val collider: ColliderPrototype, var offset: Vector2 = Vector2.ZERO) : ColliderPrototype, ExplicitCollidableWithAnything {
-
-    companion object {
-        val EMPTY = DisplacedPositionedColliderPrototype(EmptyColliderPrototype())
-    }
-
+open class DisplacedPositionedColliderPrototype(private val collider: ColliderPrototype, var offset: Vector2 = Vector2.ZERO) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         return collider.collides(myPos + offset, other, otherPos)
     }
@@ -211,11 +197,7 @@ infix fun ColliderPrototype.offset(offset: Vector2): DisplacedPositionedCollider
     return DisplacedPositionedColliderPrototype(this, offset)
 }
 
-open class InvertedPositionedColliderPrototype(private val collider: ColliderPrototype) : ColliderPrototype, ExplicitCollidableWithAnything {
-
-    companion object {
-        val EMPTY = InvertedPositionedCollider(InvertedPositionedCollider(EmptyCollider()))
-    }
+open class InvertedPositionedColliderPrototype(private val collider: ColliderPrototype) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         return !collider.collides(myPos, other, otherPos)
@@ -227,13 +209,9 @@ operator fun ColliderPrototype.not(): InvertedPositionedColliderPrototype {
 }
 
 open class PolyColliderPrototype(
-    val subColliders: MutableList<ColliderPrototype>,
-    val requiredColliders: MutableList<ColliderPrototype> = mutableListOf(),
-    pos: vecDelegate = zeroVecDelegate()
-) : ColliderPrototype, ExplicitCollidableWithAnything {
-    companion object {
-        val EMPTY = PolyPositionedCollider(mutableListOf())
-    }
+    open val subColliders: MutableList<ColliderPrototype>,
+    open val requiredColliders: MutableList<ColliderPrototype> = mutableListOf()
+) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         return subColliders.any { subCollider ->
@@ -244,11 +222,7 @@ open class PolyColliderPrototype(
     }
 }
 
-open class EmptyColliderPrototype(pos: vecDelegate = zeroVecDelegate()) : ColliderPrototype, ExplicitCollidableWithAnything {
-
-    companion object {
-        val EMPTY = EmptyCollider()
-    }
+open class EmptyColliderPrototype : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean = false
 }

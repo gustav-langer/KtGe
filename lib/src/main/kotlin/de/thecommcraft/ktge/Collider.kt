@@ -1,26 +1,24 @@
 package de.thecommcraft.ktge
 
-import org.openrndr.draw.tint
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
 import kotlin.math.*
-import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-private fun Double.squared(): Double = this * this
+internal fun Double.squared(): Double = this * this
 
-inline fun <T>unobservedDelegate(initialValue: T): ReadWriteProperty<Any?, T> {
+fun <T>unobservedDelegate(initialValue: T): ReadWriteProperty<Any?, T> {
     return observable(initialValue) { _, _, _ -> }
 }
 
 typealias vecDelegate = ReadWriteProperty<Any?, Vector2>
 
-inline fun zeroVecDelegate(): vecDelegate = unobservedDelegate(Vector2.ZERO)
+fun zeroVecDelegate(): vecDelegate = unobservedDelegate(Vector2.ZERO)
 
-inline fun positionedDelegate(positioned: Positioned): vecDelegate {
+fun positionedDelegate(positioned: Positioned): vecDelegate {
     return object : vecDelegate {
         override fun getValue(thisRef: Any?, property: KProperty<*>): Vector2 {
             return positioned.position
@@ -33,245 +31,217 @@ inline fun positionedDelegate(positioned: Positioned): vecDelegate {
 }
 
 interface Collider {
-    fun collides(other: Collider): Boolean
+    fun collides(other: Collider): Boolean {
+        return false
+    }
 }
 
-abstract class PositionedCollider(pos: vecDelegate) : Collider, Positioned {
-    override var position: Vector2 by pos
+interface PositionedCollider : Collider, Positioned {
+    val colliderPrototype: ColliderPrototype
+    override fun collides(other: Collider): Boolean {
+        if (other is PositionedCollider) return colliderPrototype.collides(position, other.colliderPrototype, other.position)
+        return super.collides(other)
+    }
 }
 
 data class Projection(val min: Double, val max: Double) {
     fun overlaps(other: Projection): Boolean = this.max > other.min && other.max > this.min
 }
 
-open class BoxCollider(
-    var width: Double,
-    var height: Double,
-    pos: vecDelegate = zeroVecDelegate()
-) : PositionedCollider(pos) {
-
-    constructor(width: Double, height: Double, parent: Positioned) : this(width, height, positionedDelegate(parent))
-
-    constructor(width: Double, height: Double, position: Vector2) : this(width, height, unobservedDelegate(position))
-
-    companion object {
-        val EMPTY = BoxCollider(0.0, 0.0)
-    }
-
+interface BoxCollider : PositionedCollider {
+    var width: Double
+    var height: Double
     val rectangle: Rectangle
-        get() = Rectangle.fromCenter(position, width, height)
-
-    open fun collides(other: RotatedRectangleCollider): Boolean = other.collides(this)
-
-    open fun collides(other: CircleCollider): Boolean = other.collides(this)
-
-    open fun collides(other: BoxCollider): Boolean {
-        if (abs(this.position.x - other.position.x) > (this.width + other.width) / 2.0) {
-            return false
-        }
-        if (abs(this.position.y - other.position.y) > (this.height + other.height) / 2.0) {
-            return false
-        }
-        return true
-    }
-
-    override fun collides(other: Collider): Boolean {
-        return false
-    }
-
-    open fun asRotated(): RotatedRectangleCollider =
-        RotatedRectangleCollider(width, height, unobservedDelegate(position))
-
-    open fun project(axis: Vector2): Projection {
-        val centerProjection = this.position.dot(axis)
-        val radiusProjection = (this.width / 2.0) * abs(axis.x) + (this.height / 2.0) * abs(axis.y)
-        return Projection(centerProjection - radiusProjection, centerProjection + radiusProjection)
-    }
 }
 
-open class CircleCollider(
-    var radius: Double,
-    pos: vecDelegate = zeroVecDelegate()
-) : PositionedCollider(pos) {
+fun BoxCollider.asRotated(rotation: Double = 0.0) {}
 
-    constructor(radius: Double, parent: Positioned) : this(radius, positionedDelegate(parent))
-
-    constructor(radius: Double, position: Vector2) : this(radius, unobservedDelegate(position))
-
-    companion object {
-        val EMPTY = CircleCollider(0.0)
+fun boxColliderOf(width: Double, height: Double, position: Vector2 = Vector2.ZERO) =
+    object : BoxCollider {
+        override val colliderPrototype = BoxColliderPrototype(width, height)
+        override var width: Double by colliderPrototype::width
+        override var height: Double by colliderPrototype::height
+        override var position: Vector2 = position
+        override val rectangle: Rectangle
+            get() = colliderPrototype.correspondingRectangle(position)
     }
 
+interface CircleCollider : PositionedCollider {
+    var radius: Double
     val circle: Circle
-        get() = Circle(position, radius)
-
-    override fun collides(other: Collider): Boolean {
-        return false
-    }
-
-    open fun collides(other: CircleCollider): Boolean {
-        val distanceSq = (this.position - other.position).squaredLength
-        val radiiSumSq = (this.radius + other.radius).squared()
-        return distanceSq <= radiiSumSq
-    }
-
-    open fun collides(other: BoxCollider): Boolean {
-        val closestPoint = Vector2(
-            x = this.position.x.coerceIn(other.rectangle.corner.x, other.rectangle.corner.x + other.width),
-            y = this.position.y.coerceIn(other.rectangle.corner.y, other.rectangle.corner.y + other.height)
-        )
-        val distanceSq = (this.position - closestPoint).squaredLength
-        return distanceSq < this.radius.squared()
-    }
-
-    open fun collides(other: RotatedRectangleCollider): Boolean = other.collides(this)
 }
 
+fun circleColliderOf(radius: Double, position: Vector2 = Vector2.ZERO) =
+    object : CircleCollider {
+        override val colliderPrototype = CircleColliderPrototype(radius)
+        override var position: Vector2 = position
+        override val circle: Circle
+            get() = Circle(position, radius)
+        override var radius: Double by colliderPrototype::radius
+    }
 
-
-open class RotatedRectangleCollider(
-    width: Double,
-    height: Double,
-    pos: vecDelegate = zeroVecDelegate(),
-    var rotation: Double = 0.0
-) : BoxCollider(width, height, pos) {
-
-    constructor(width: Double, height: Double, parent: Positioned, rotation: Double = 0.0) : this(width, height, positionedDelegate(parent), rotation)
-
-    constructor(width: Double, height: Double, position: Vector2, rotation: Double = 0.0) : this(width, height, unobservedDelegate(position), rotation)
+interface Rotation {
+    val degrees: Double
+    val radians: Double
 
     companion object {
-        val EMPTY = RotatedRectangleCollider(0.0, 0.0)
-    }
-
-    private val vertices: List<Vector2>
-        get() {
-            val halfW = width / 2.0
-            val halfH = height / 2.0
-            return listOf(
-                Vector2(-halfW, -halfH), Vector2(halfW, -halfH),
-                Vector2(halfW, halfH), Vector2(-halfW, halfH)
-            ).map { it.rotate(rotation) + position }
+        val ZERO = object : Rotation {
+            override val degrees: Double = 0.0
+            override val radians: Double = 0.0
         }
-
-    private val axes: List<Vector2>
-        get() = listOf(
-            (vertices[1] - vertices[0]).normalized.perpendicular(),
-            (vertices[2] - vertices[1]).normalized.perpendicular()
-        )
-
-    override fun collides(other: CircleCollider): Boolean {
-        val localCircleCenter = (other.position - this.position).rotate(-this.rotation)
-
-        val closestPoint = Vector2(
-            x = localCircleCenter.x.coerceIn(-width / 2.0, width / 2.0),
-            y = localCircleCenter.y.coerceIn(-height / 2.0, height / 2.0)
-        )
-
-        val distanceSq = (localCircleCenter - closestPoint).squaredLength
-        return distanceSq < other.radius.squared()
-    }
-
-    override fun collides(other: RotatedRectangleCollider): Boolean {
-        val allAxes = this.axes + other.axes
-
-        for (axis in allAxes) {
-            val p1 = this.project(axis)
-            val p2 = other.project(axis)
-            if (!p1.overlaps(p2)) {
-                return false
-            }
+        fun degrees(degrees: Double): Rotation {
+            return Degrees(degrees=degrees)
         }
-        return true
-    }
-
-    override fun collides(other: BoxCollider): Boolean {
-        val allAxes = axes + listOf(Vector2.UNIT_X, Vector2.UNIT_Y)
-
-        for (axis in allAxes) {
-            val p1 = project(axis)
-            val p2 = other.project(axis)
-            if (!p1.overlaps(p2)) {
-                return false
-            }
+        fun radians(radians: Double): Rotation {
+            return Radians(radians=radians)
         }
-        return true
-    }
-
-    override fun project(axis: Vector2): Projection {
-        val projections = vertices.map { it.dot(axis) }
-        return Projection(projections.minOrNull()!!, projections.maxOrNull()!!)
-    }
-
-    override fun asRotated(): RotatedRectangleCollider {
-        return RotatedRectangleCollider(width, height, unobservedDelegate(position), rotation)
     }
 }
 
-open class DisplacedPositionedCollider(private val collider: PositionedCollider, var offset: Vector2 = Vector2.ZERO, pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
-
-    constructor(collider: PositionedCollider, offset: Vector2, parent: Positioned) : this(collider, offset, positionedDelegate(parent))
-
-    constructor(collider: PositionedCollider, offset: Vector2, position: Vector2) : this(collider, offset, unobservedDelegate(position))
-
-    companion object {
-        val EMPTY = DisplacedPositionedCollider(EmptyCollider())
-    }
-
-    override fun collides(other: Collider): Boolean {
-        collider.position = position - offset
-        return collider.collides(other)
-    }
+@JvmInline
+value class Degrees(override val degrees: Double) : Rotation {
+    override val radians: Double
+        get() = degrees / 180.0 * PI
 }
+
+@JvmInline
+value class Radians(override val radians: Double) : Rotation {
+    override val degrees: Double
+        get() = radians / PI * 180.0
+}
+
+interface RotatedBoxCollider : BoxCollider {
+    @Deprecated(
+        "Returns unrotated Rectangle. As this is not entirely clear from the name, it is recommended to use the extension attribute `.nonRotatedRectangle` instead.",
+        replaceWith = ReplaceWith(".nonRotatedRectangle")
+    )
+    override val rectangle: Rectangle
+        get() = nonRotatedRectangle
+    var rotation: Rotation
+}
+
+fun RotatedBoxCollider.asNonRotated() {}
+
+val RotatedBoxCollider.nonRotatedRectangle: Rectangle
+    get() = Rectangle.fromCenter(position, width, height)
+
+fun rotatedBoxColliderOf(width: Double, height: Double, rotation: Rotation = Rotation.ZERO, position: Vector2 = Vector2.ZERO) =
+    object : RotatedBoxCollider {
+        override val colliderPrototype = RotatedBoxColliderPrototype(width, height, rotation)
+        override var rotation: Rotation by colliderPrototype::rotation
+        override var width: Double by colliderPrototype::width
+        override var height: Double by colliderPrototype::height
+        override var position: Vector2 = position
+    }
+
+interface DisplacedPositionedCollider : PositionedCollider {
+    val collider: PositionedCollider
+    var offset: Vector2
+}
+
+/**
+ * @param[collider] The position of this [Collider] is ignored.
+ * If you want to use the position of this Collider, pass [InheritPosition] or [InheritDisplacedPosition] as position into the function.
+ *
+ * InheritPosition will cause the position of the [DisplacedPositionedCollider] to be the same as the collider's position.
+ *
+ * InheritDisplacedPosition will cause the position of the DisplacedPositionedCollider to be offset from the collider's position.
+ */
+fun displacedPositionedColliderOf(collider: PositionedCollider, offset: Vector2 = Vector2.ZERO, position: Vector2 = Vector2.ZERO) =
+    object : DisplacedPositionedCollider {
+        override val colliderPrototype = DisplacedPositionedColliderPrototype(collider.colliderPrototype, offset)
+        override val collider: PositionedCollider = collider
+        override var offset: Vector2 by colliderPrototype::offset
+        override var position: Vector2 = position
+    }
+
+object InheritPosition
+
+object InheritDisplacedPosition
+
+enum class DisplacementOffsetChangeBehavior {
+    MOVE_CHILD_COLLIDER,
+    MOVE_PARENT_COLLIDER
+}
+
+fun displacedPositionedColliderOf(collider: PositionedCollider, offset: Vector2 = Vector2.ZERO, position: InheritPosition) =
+    object : DisplacedPositionedCollider {
+        override val colliderPrototype = DisplacedPositionedColliderPrototype(collider.colliderPrototype, offset)
+        override val collider: PositionedCollider = collider
+        override var offset: Vector2 by colliderPrototype::offset
+        override var position: Vector2 by collider::position
+    }
+
+fun displacedPositionedColliderOf(collider: PositionedCollider, offset: Vector2 = Vector2.ZERO, position: InheritDisplacedPosition, displacementOffsetChangeBehavior: DisplacementOffsetChangeBehavior = DisplacementOffsetChangeBehavior.MOVE_CHILD_COLLIDER) =
+    object : DisplacedPositionedCollider {
+        override val colliderPrototype = DisplacedPositionedColliderPrototype(collider.colliderPrototype, offset)
+        override val collider: PositionedCollider = collider
+        override var offset: Vector2
+            get() = colliderPrototype.offset
+            set(value) {
+                if (displacementOffsetChangeBehavior == DisplacementOffsetChangeBehavior.MOVE_CHILD_COLLIDER) {
+                    collider.position -= offset - value
+                }
+                colliderPrototype.offset = value
+            }
+        override var position: Vector2
+            get() = collider.position - offset
+            set(value) { collider.position = value + offset }
+    }
 
 infix fun PositionedCollider.offset(offset: Vector2): DisplacedPositionedCollider {
-    return DisplacedPositionedCollider(this, offset)
+    return displacedPositionedColliderOf(this, offset, InheritDisplacedPosition)
 }
 
-open class InvertedPositionedCollider(private val collider: PositionedCollider, pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
-
-    constructor(collider: PositionedCollider, parent: Positioned) : this(collider, positionedDelegate(parent))
-
-    constructor(collider: PositionedCollider, position: Vector2) : this(collider, unobservedDelegate(position))
-
-    companion object {
-        val EMPTY = InvertedPositionedCollider(InvertedPositionedCollider(EmptyCollider()))
-    }
-
-    override fun collides(other: Collider): Boolean {
-        collider.position = position
-        return !collider.collides(other)
-    }
+interface InvertedPositionedCollider : PositionedCollider {
+    val collider: PositionedCollider
 }
+
+/**
+ * @param[collider] The position of this [Collider] is ignored.
+ * If you want to use the position of this Collider, pass [InheritPosition] as position into the function.
+ */
+fun invertedPositionedColliderOf(collider: PositionedCollider, position: Vector2 = Vector2.ZERO) =
+    object : InvertedPositionedCollider {
+        override val colliderPrototype = InvertedPositionedColliderPrototype(collider.colliderPrototype)
+        override val collider: PositionedCollider = collider
+        override var position: Vector2 = position
+    }
+
+fun invertedPositionedColliderOf(collider: PositionedCollider, position: InheritPosition) =
+    object : InvertedPositionedCollider {
+        override val colliderPrototype = InvertedPositionedColliderPrototype(collider.colliderPrototype)
+        override val collider: PositionedCollider = collider
+        override var position: Vector2 by collider::position
+    }
 
 operator fun PositionedCollider.not(): InvertedPositionedCollider {
-    return InvertedPositionedCollider(this)
+    return invertedPositionedColliderOf(this, InheritPosition)
 }
 
-open class PolyPositionedCollider(
-    val subColliders: MutableList<PositionedCollider>,
-    val requiredColliders: MutableList<PositionedCollider> = mutableListOf(),
-    pos: vecDelegate = zeroVecDelegate()
-) : PositionedCollider(pos) {
+interface PolyPositionedCollider : PositionedCollider {
+    val subColliders: MutableList<PositionedCollider>
+    val requiredColliders: MutableList<PositionedCollider>
+}
 
-    constructor(subColliders: MutableList<PositionedCollider>, requiredColliders: MutableList<PositionedCollider> = mutableListOf(), parent: Positioned) : this(subColliders, requiredColliders, positionedDelegate(parent))
-
-    constructor(subColliders: MutableList<PositionedCollider>, requiredColliders: MutableList<PositionedCollider> = mutableListOf(), position: Vector2) : this(subColliders, requiredColliders, unobservedDelegate(position))
-
-    companion object {
-        val EMPTY = PolyPositionedCollider(mutableListOf())
-    }
-
-    override fun collides(other: Collider): Boolean {
-        return subColliders.any { subCollider ->
-            if (subCollider.position != position) subCollider.position = position
-            subCollider.collides(other)
-        } && requiredColliders.all { subCollider ->
-            if (subCollider.position != position) subCollider.position = position
-            subCollider.collides(other)
+/**
+ * The positions of the [subColliders] and [requiredColliders] are ignored.
+ */
+fun polyPositionedColliderOf(subColliders: MutableList<PositionedCollider>, requiredColliders: MutableList<PositionedCollider>, position: Vector2 = Vector2.ZERO) =
+    object : PolyPositionedCollider {
+        override val colliderPrototype = object : ColliderPrototype {
+            override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
+                return subColliders.any { subCollider ->
+                    subCollider.colliderPrototype.collides(myPos, other, otherPos)
+                } && requiredColliders.all { subCollider ->
+                    subCollider.colliderPrototype.collides(myPos, other, otherPos)
+                }
+            }
         }
+        override val subColliders: MutableList<PositionedCollider> = subColliders
+        override val requiredColliders: MutableList<PositionedCollider> = requiredColliders
+        override var position: Vector2 = position
     }
-}
 
 interface AnyColliderBuilder<T> {
     fun collider(collider: PositionedCollider): Unit
@@ -353,9 +323,9 @@ open class ColliderBuilder(private val buildFun: BuildFun<ColliderBuilder>) : An
         invertedRequiredColliderBuilders.forEach {
             invertedRequiredColliders.add(it.build())
         }
-        colliders.addAll(invertedColliders.map(::InvertedPositionedCollider))
-        requiredColliders.addAll(invertedRequiredColliders.map(::InvertedPositionedCollider))
-        return PolyPositionedCollider(colliders, requiredColliders)
+        colliders.addAll(invertedColliders.map(::invertedPositionedColliderOf))
+        requiredColliders.addAll(invertedRequiredColliders.map(::invertedPositionedColliderOf))
+        return polyPositionedColliderOf(colliders, requiredColliders)
     }
 }
 
@@ -363,11 +333,9 @@ fun collider(buildFun: BuildFun<ColliderBuilder>): PolyPositionedCollider {
     return ColliderBuilder(buildFun).build()
 }
 
-open class EmptyCollider(pos: vecDelegate = zeroVecDelegate()) : PositionedCollider(pos) {
+open class EmptyCollider(override var position: Vector2 = Vector2.ZERO) : PositionedCollider {
 
-    constructor(parent: Positioned) : this(positionedDelegate(parent))
-
-    constructor(position: Vector2) : this(unobservedDelegate(position))
+    override val colliderPrototype = EmptyColliderPrototype()
 
     companion object {
         val EMPTY = EmptyCollider()
@@ -376,12 +344,10 @@ open class EmptyCollider(pos: vecDelegate = zeroVecDelegate()) : PositionedColli
     override fun collides(other: Collider): Boolean = false
 }
 
-open class PointCollider(pos: vecDelegate = zeroVecDelegate()) : BoxCollider(0.0, 0.0, pos) {
+interface PointCollider : PositionedCollider
 
-    constructor(parent: Positioned) : this(positionedDelegate(parent))
-
-    constructor(position: Vector2) : this(unobservedDelegate(position))
-}
+fun pointColliderOf(position: Vector2): PointCollider =
+    object : PointCollider, BoxCollider by boxColliderOf(0.0, 0.0, position) {}
 
 // More performant collision API (probably)
 
