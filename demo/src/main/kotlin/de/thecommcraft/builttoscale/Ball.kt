@@ -38,6 +38,7 @@ class Ball(val color: ColorRGBa = ColorRGBa.CYAN) : Sprite() {
                 }
             }
         }
+        Unit
     }
 
     // In this sprite, position is calculated globally, i.e. from the top left of the screen and not the window.
