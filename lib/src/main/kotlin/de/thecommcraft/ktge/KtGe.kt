@@ -36,6 +36,9 @@ class EventListener<E>(val event: Event<E>, val eventListener: (E) -> Unit) {
     fun listen() {
         event.listen(eventListener)
     }
+    fun listenOnce() {
+        event.listenOnce(eventListener)
+    }
 }
 
 abstract class Sprite : Drawable, SpriteHost, Positioned {
@@ -76,6 +79,11 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         return eventListener
     }
 
+    fun <E> onFirst(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
+        val eventListener = EventListener(event) { this.code(it) }
+        eventListener.listenOnce()
+        return eventListener
+    }
 
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
