@@ -7,6 +7,7 @@ import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import java.util.Collections
 import java.util.WeakHashMap
+import java.util.function.BiConsumer
 
 typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
@@ -126,7 +127,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun uninit() {
-        eventListeners.toList().forEach { (t, _) -> t.unlisten() }
+        eventListeners.entries.forEach { (t, _) -> t.unlisten() }
         childSprites.forEach(this::removeSprite)
         uninitSprite()
     }
