@@ -164,6 +164,7 @@ class GameWindow(
             on(mouse.buttonDown) {
                 if (Rectangle(position, barHeight, barHeight).contains(it.position)) action()
             }
+            Unit
         }
     }
 }
