@@ -125,7 +125,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun uninit() {
-        eventListeners.forEach { (t, u) -> t?.unlisten() }
+        eventListeners.toList().forEach { (t, _) -> t?.unlisten() }
         childSprites.forEach(this::removeSprite)
         uninitSprite()
     }
