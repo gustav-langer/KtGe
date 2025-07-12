@@ -32,7 +32,6 @@ open class BoxColliderPrototype(
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         when (other) {
-            is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
             is ExplicitCollidableWithBoxPrototype -> return other.collides(otherPos, this, myPos)
             is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
         }
@@ -75,10 +74,9 @@ open class CircleColliderPrototype(
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         when (other) {
-            is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is CircleColliderPrototype -> return this.collides(myPos, other, otherPos)
             is ExplicitCollidableWithCirclePrototype -> return other.collides(otherPos, this, myPos)
             is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
+            is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
         }
         return super.collides(myPos, other, otherPos)
     }
@@ -112,11 +110,10 @@ open class RotatedBoxColliderPrototype(
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         when (other) {
-            is RotatedBoxColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
-            is CircleColliderPrototype -> return this.collides(myPos, other, otherPos)
             is ExplicitCollidableWithRotatedBoxPrototype -> return other.collides(otherPos, this, myPos)
             is ExplicitCollidableWithAnyColliderPrototype -> return other.collides(otherPos, this, myPos)
+            is BoxColliderPrototype -> return this.collides(myPos, other, otherPos)
+            is CircleColliderPrototype -> return this.collides(myPos, other, otherPos)
         }
         return super.collides(myPos, other, otherPos)
     }
