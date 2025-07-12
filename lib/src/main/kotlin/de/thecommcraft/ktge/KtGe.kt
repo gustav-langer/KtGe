@@ -55,7 +55,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     lateinit var program: Program
     lateinit var app: KtgeApp
 
-    private val eventListeners: WeakHashMap<EventListener<*>, Unit> = WeakHashMap()
+    private val eventListeners: MutableMap<EventListener<*>, Unit> = ThreadSafeMutableWeakKeyMap()
 
     override var position: Vector2 = Vector2.ZERO
     var costumeIdx: Int = 0
@@ -125,7 +125,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun uninit() {
-        eventListeners.toList().forEach { (t, _) -> t?.unlisten() }
+        eventListeners.forEach { (t, _) -> t.unlisten() }
         childSprites.forEach(this::removeSprite)
         uninitSprite()
     }
