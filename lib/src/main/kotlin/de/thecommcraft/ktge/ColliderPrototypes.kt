@@ -24,6 +24,10 @@ open class BoxColliderPrototype(
     var height: Double
 ) : ColliderPrototype, ExplicitCollidableWithBoxPrototype {
 
+    companion object {
+        fun fromRectangle(rectangle: Rectangle): BoxColliderPrototype = BoxColliderPrototype(rectangle.width, rectangle.height)
+    }
+
     fun correspondingRectangle(position: Vector2) = Rectangle.fromCenter(position, width, height)
 
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
@@ -62,6 +66,10 @@ interface ExplicitCollidableWithCirclePrototype {
 open class CircleColliderPrototype(
     var radius: Double
 ) : ColliderPrototype, ExplicitCollidableWithCirclePrototype, ExplicitCollidableWithBoxPrototype {
+
+    companion object {
+        fun fromCircle(circle: Circle): CircleColliderPrototype = CircleColliderPrototype(circle.radius)
+    }
 
     fun correspondingCircle(position: Vector2) = Circle(position, radius)
 

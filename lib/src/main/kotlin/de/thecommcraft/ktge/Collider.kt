@@ -48,10 +48,13 @@ data class Projection(val min: Double, val max: Double) {
     fun overlaps(other: Projection): Boolean = this.max > other.min && other.max > this.min
 }
 
+/**
+ * @property[rectangle] is probably not a backed field.
+ */
 interface BoxCollider : PositionedCollider {
     var width: Double
     var height: Double
-    val rectangle: Rectangle
+    var rectangle: Rectangle
     companion object {
         class BoxColliderBuilder internal constructor() {
             var width: Double = 0.0
@@ -79,11 +82,17 @@ interface BoxCollider : PositionedCollider {
             builder.buildFun()
             return object : BoxCollider {
                 override val colliderPrototype = BoxColliderPrototype(builder.width, builder.height)
-                override var position: Vector2 by builder.positionVecDelegate
-                override val rectangle: Rectangle
-                    get() = colliderPrototype.correspondingRectangle(position)
                 override var width: Double by colliderPrototype::width
                 override var height: Double by colliderPrototype::height
+                val positionVecDelegate = builder.positionVecDelegate
+                override var position: Vector2 by positionVecDelegate
+                override var rectangle: Rectangle
+                    get() = colliderPrototype.correspondingRectangle(position)
+                    set(value) {
+                        this.position = value.center
+                        this.width = value.width
+                        this.height = value.height
+                    }
             }
         }
     }
@@ -97,21 +106,70 @@ fun boxColliderOf(width: Double, height: Double, position: Vector2 = Vector2.ZER
         override var width: Double by colliderPrototype::width
         override var height: Double by colliderPrototype::height
         override var position: Vector2 = position
-        override val rectangle: Rectangle
+        override var rectangle: Rectangle
             get() = colliderPrototype.correspondingRectangle(position)
+            set(value) {
+                this.position = value.center
+                this.width = value.width
+                this.height = value.height
+            }
     }
 
+/**
+ * @property[circle] is probably not a backed field.
+ */
 interface CircleCollider : PositionedCollider {
     var radius: Double
-    val circle: Circle
+    var circle: Circle
+    companion object {
+        class CircleColliderBuilder internal constructor() {
+            var radius: Double = 0.0
+            internal var positionVecDelegate: vecDelegate = unobservedDelegate(Vector2.ZERO)
+            var position: Vector2 by positionVecDelegate
+            var circle: Circle
+                get() = Circle(position, radius)
+                set(value) {
+                    position = value.center
+                    radius = value.radius
+                }
+            var parent: Positioned? = null
+                set(value) {
+                    value?.let { positionVecDelegate = positionedDelegate(it) }
+                    field = value
+                }
+            fun setPositionDelegate(vecDelegate: vecDelegate) {
+                positionVecDelegate = vecDelegate
+            }
+        }
+        fun build(buildFun: BuildFun<CircleColliderBuilder>): CircleCollider {
+            val builder = CircleColliderBuilder()
+            builder.buildFun()
+            return object : CircleCollider {
+                override val colliderPrototype = CircleColliderPrototype(builder.radius)
+                val positionVecDelegate = builder.positionVecDelegate
+                override var position: Vector2 by positionVecDelegate
+                override var circle: Circle
+                    get() = Circle(position, radius)
+                    set(value) {
+                        this.position = value.center
+                        this.radius = value.radius
+                    }
+                override var radius: Double by colliderPrototype::radius
+            }
+        }
+    }
 }
 
 fun circleColliderOf(radius: Double, position: Vector2 = Vector2.ZERO) =
     object : CircleCollider {
         override val colliderPrototype = CircleColliderPrototype(radius)
         override var position: Vector2 = position
-        override val circle: Circle
+        override var circle: Circle
             get() = Circle(position, radius)
+            set(value) {
+                this.position = value.center
+                this.radius = value.radius
+            }
         override var radius: Double by colliderPrototype::radius
     }
 
@@ -147,12 +205,54 @@ value class Radians(override val radians: Double) : Rotation {
 
 interface RotatedBoxCollider : BoxCollider {
     @Deprecated(
-        "Returns unrotated Rectangle. As this is not entirely clear from the name, it is recommended to use the extension attribute `.nonRotatedRectangle` instead.",
+        "Returns unrotated Rectangle. As this is not entirely clear from the name, it is recommended to use the extension attribute `.nonRotatedRectangle` instead. Setting this will reset the rotation.",
         replaceWith = ReplaceWith(".nonRotatedRectangle")
     )
-    override val rectangle: Rectangle
+    override var rectangle: Rectangle
         get() = nonRotatedRectangle
+        set(value) {
+            position = value.center
+            width = value.width
+            height = value.height
+            rotation = Rotation.ZERO
+        }
     var rotation: Rotation
+    companion object {
+        class RotatedBoxColliderBuilder internal constructor() {
+            var width: Double = 0.0
+            var height: Double = 0.0
+            var rotation: Rotation = Rotation.ZERO
+            internal var positionVecDelegate: vecDelegate = unobservedDelegate(Vector2.ZERO)
+            var position: Vector2 by positionVecDelegate
+            var rectangle: Rectangle
+                get() = Rectangle.fromCenter(position, width, height)
+                set(value) {
+                    position = value.center
+                    width = value.width
+                    height = value.height
+                }
+            var parent: Positioned? = null
+                set(value) {
+                    value?.let { positionVecDelegate = positionedDelegate(it) }
+                    field = value
+                }
+            fun setPositionDelegate(vecDelegate: vecDelegate) {
+                positionVecDelegate = vecDelegate
+            }
+        }
+        fun build(buildFun: BuildFun<RotatedBoxColliderBuilder>): RotatedBoxCollider {
+            val builder = RotatedBoxColliderBuilder()
+            builder.buildFun()
+            return object : RotatedBoxCollider {
+                override val colliderPrototype = RotatedBoxColliderPrototype(builder.width, builder.height, builder.rotation)
+                override var rotation: Rotation by colliderPrototype::rotation
+                override var width: Double by colliderPrototype::width
+                override var height: Double by colliderPrototype::height
+                val positionVecDelegate = builder.positionVecDelegate
+                override var position: Vector2 by positionVecDelegate
+            }
+        }
+    }
 }
 
 fun RotatedBoxCollider.asNonRotated() {}
@@ -161,12 +261,11 @@ val RotatedBoxCollider.nonRotatedRectangle: Rectangle
     get() = Rectangle.fromCenter(position, width, height)
 
 fun rotatedBoxColliderOf(width: Double, height: Double, rotation: Rotation = Rotation.ZERO, position: Vector2 = Vector2.ZERO) =
-    object : RotatedBoxCollider {
-        override val colliderPrototype = RotatedBoxColliderPrototype(width, height, rotation)
-        override var rotation: Rotation by colliderPrototype::rotation
-        override var width: Double by colliderPrototype::width
-        override var height: Double by colliderPrototype::height
-        override var position: Vector2 = position
+    RotatedBoxCollider.build {
+        this.width = width
+        this.height = height
+        this.rotation = rotation
+        this.position = position
     }
 
 interface DisplacedPositionedCollider : PositionedCollider {
