@@ -29,6 +29,15 @@ interface SpriteHost {
     fun removeSprites(predicate: (Drawable) -> Boolean)
 }
 
+class EventListener<E>(val event: Event<E>, val eventListener: (E) -> Unit) {
+    fun unlisten() {
+        event.cancel(eventListener)
+    }
+    fun listen() {
+        event.listen(eventListener)
+    }
+}
+
 abstract class Sprite : Drawable, SpriteHost, Positioned {
     lateinit var parent: SpriteHost
     lateinit var program: Program
@@ -61,9 +70,12 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         runEachFrame.add(code)
     }
 
-    fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit) {
-        event.listen { this.code(it) }
+    fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
+        val eventListener = EventListener(event) { this.code(it) }
+        eventListener.listen()
+        return eventListener
     }
+
 
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
