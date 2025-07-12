@@ -101,18 +101,10 @@ interface BoxCollider : PositionedCollider {
 fun BoxCollider.asRotated(rotation: Double = 0.0) {}
 
 fun boxColliderOf(width: Double, height: Double, position: Vector2 = Vector2.ZERO) =
-    object : BoxCollider {
-        override val colliderPrototype = BoxColliderPrototype(width, height)
-        override var width: Double by colliderPrototype::width
-        override var height: Double by colliderPrototype::height
-        override var position: Vector2 = position
-        override var rectangle: Rectangle
-            get() = colliderPrototype.correspondingRectangle(position)
-            set(value) {
-                this.position = value.center
-                this.width = value.width
-                this.height = value.height
-            }
+    BoxCollider.build {
+        this.width = width
+        this.height = height
+        this.position = position
     }
 
 /**
@@ -161,16 +153,9 @@ interface CircleCollider : PositionedCollider {
 }
 
 fun circleColliderOf(radius: Double, position: Vector2 = Vector2.ZERO) =
-    object : CircleCollider {
-        override val colliderPrototype = CircleColliderPrototype(radius)
-        override var position: Vector2 = position
-        override var circle: Circle
-            get() = Circle(position, radius)
-            set(value) {
-                this.position = value.center
-                this.radius = value.radius
-            }
-        override var radius: Double by colliderPrototype::radius
+    CircleCollider.build {
+        this.radius = radius
+        this.position = position
     }
 
 interface Rotation {
