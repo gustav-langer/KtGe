@@ -1,7 +1,6 @@
 package de.thecommcraft.ktge
 import org.openrndr.MouseEvent
 import org.openrndr.MouseButton
-import org.openrndr.Program
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import kotlin.properties.Delegates

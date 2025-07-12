@@ -6,7 +6,8 @@ import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 
-typealias BuildFun<T> = T.() -> Unit // TODO find a good name for this
+typealias ApplicableFun<T> = T.() -> Unit
+typealias BuildFun<T> = ApplicableFun<T>
 typealias SpriteCode = BuildFun<Sprite>
 
 interface ToInitialize {
@@ -108,6 +109,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 }
 
+abstract class CollidableSprite : Sprite(), PositionedCollider
+
 interface KtgeApp : Program, SpriteHost {
     fun getTotalDepth(): Int
 
@@ -128,28 +131,28 @@ fun ktge(
     program {
         window.presentationMode = PresentationMode.MANUAL
 
-        val spritesActual: MutableList<Drawable> = mutableListOf() // TODO name
+        val currentSprites: MutableList<Drawable> = mutableListOf()
         val appImpl = object : KtgeApp, Program by this {
             override fun createSprite(sprite: Drawable) {
-                spritesActual.add(sprite)
+                currentSprites.add(sprite)
                 sprite.init(this, this, this)
             }
 
             override fun removeSprite(sprite: Drawable) {
-                spritesActual.remove(sprite)
+                currentSprites.remove(sprite)
             }
 
             override fun removeSprites(predicate: (Drawable) -> Boolean) {
-                spritesActual.removeIf(predicate)
+                currentSprites.removeIf(predicate)
             }
 
             override fun getTotalDepth(): Int {
-                return spritesActual.size
+                return currentSprites.size
             }
 
             override fun setDepth(sprite: Drawable, depth: Int) {
                 removeSprite(sprite)
-                spritesActual.add(getTotalDepth() - depth, sprite)
+                currentSprites.add(getTotalDepth() - depth, sprite)
             }
         }
 
@@ -170,10 +173,10 @@ fun ktge(
 
                 window.requestDraw()
             }
-            for (spr in spritesActual) {
+            for (spr in currentSprites) {
                 spr.update()
             }
-            for (spr in spritesActual) {
+            for (spr in currentSprites) {
                 spr.draw()
             }
         }
