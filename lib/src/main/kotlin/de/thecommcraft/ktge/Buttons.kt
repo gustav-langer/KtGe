@@ -3,6 +3,7 @@ import org.openrndr.MouseEvent
 import org.openrndr.MouseButton
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
+import javax.swing.Box
 import kotlin.properties.Delegates
 
 class ButtonEvent {
@@ -65,8 +66,8 @@ abstract class BoxButton(val size: Vector2): Sprite() {
     }
 }
 
-open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
-    protected open val buttons: MutableList<BoxButton> = mutableListOf()
+open class ButtonList<T: BoxButton>(val buildFun: BuildFun<ButtonList<T>>) : Sprite() {
+    protected open val buttons: MutableList<T> = mutableListOf()
     protected open var buttonIdx: Int = 0
 
     var blocked: Boolean
@@ -82,7 +83,7 @@ open class ButtonList(val buildFun: BuildFun<ButtonList>) : Sprite() {
 
     open fun initButtonList() {}
 
-    fun button(button: BoxButton) {
+    fun button(button: T) {
         buttons.add(button)
         createSprite(button)
     }
