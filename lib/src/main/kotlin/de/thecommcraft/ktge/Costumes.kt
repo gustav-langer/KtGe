@@ -49,7 +49,7 @@ open class ImageCostume(
     }
 
     override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig() // TODO find a good name for this
+        drawer.drawerConfig()
         drawer.image(buf, position)
     }
 }

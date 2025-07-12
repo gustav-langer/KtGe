@@ -62,7 +62,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit) {
-        event.listen { code(it) } // The warning here is a known bug, see https://youtrack.jetbrains.com/issue/KT-21282 TODO remove this comment if the warning is gone
+        event.listen { this.code(it) }
     }
 
     fun schedule(code: SpriteCode) = scheduledCode.add(code)
