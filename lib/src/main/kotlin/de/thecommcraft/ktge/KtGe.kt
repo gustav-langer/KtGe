@@ -277,9 +277,9 @@ fun ktge(
 
                     if (d > 0L) delay(d)
 
-                    window.requestDraw()
-
                     lastDraw = seconds
+
+                    window.requestDraw()
                 }
             }
             for (spr in currentSprites) {
