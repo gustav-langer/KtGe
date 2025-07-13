@@ -202,7 +202,7 @@ fun ktge(
     initialize: List<ToInitialize> = listOf(),
     config: BuildFun<Configuration> = {},
     background: ColorRGBa? = ColorRGBa.BLACK,
-    frameRate: Long? = 60L,
+    frameRate: Long? = null,
     extensions: List<Extension> = listOf()
 ) = application {
     configure(config)
@@ -266,17 +266,20 @@ fun ktge(
         backgroundColor = background
 
         extensions.forEach(::extend)
+        var lastDraw = 0.0
 
         extend {
             frameRate?.let {
                 launch {
                     val msPerFrame = 1000.0 / frameRate
-                    val msGoneBy = seconds.mod(msPerFrame / 1000.0) * 1000.0
-                    val d = (msPerFrame - msGoneBy).toLong()
+                    val msSinceLastDraw = (seconds - lastDraw) * 1000
+                    val d = (msPerFrame - msSinceLastDraw).toLong()
 
                     if (d > 0L) delay(d)
 
                     window.requestDraw()
+
+                    lastDraw = seconds
                 }
             }
             for (spr in currentSprites) {
