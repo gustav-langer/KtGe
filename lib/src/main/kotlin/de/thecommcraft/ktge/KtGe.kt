@@ -208,7 +208,7 @@ fun ktge(
     configure(config)
 
     program {
-        window.presentationMode = PresentationMode.MANUAL
+        frameRate?.let { window.presentationMode = PresentationMode.MANUAL }
 
         val currentSprites: MutableList<Drawable> = mutableListOf()
         val appImpl = object : KtgeApp, Program by this {
