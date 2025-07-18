@@ -1,13 +1,11 @@
 package de.thecommcraft.ktge
 
-import kotlinx.coroutines.delay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import java.util.Collections
 import java.util.WeakHashMap
-import java.util.function.BiConsumer
 
 typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
@@ -135,8 +133,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     override fun update() {
         val scheduledCopy = scheduledCode.toList()
         scheduledCode.clear()
-        for (f in scheduledCopy) f()
-        for (f in runEachFrame) f()
+        scheduledCopy.forEach(::run)
+        runEachFrame.forEach(::run)
         for (spr in childSprites) spr.update()
     }
 
@@ -208,8 +206,6 @@ fun ktge(
     configure(config)
 
     program {
-        frameRate?.let { window.presentationMode = PresentationMode.MANUAL }
-
         val currentSprites: MutableList<Drawable> = mutableListOf()
         val appImpl = object : KtgeApp, Program by this {
             override val currentSprites: List<Drawable>
@@ -242,7 +238,7 @@ fun ktge(
             @Deprecated("Define a SpriteHost with custom draw function instead to control draw order.")
             override fun setDepth(sprite: Drawable, depth: Int) {
                 currentSprites.remove(sprite)
-                currentSprites.add(getTotalDepth() - depth, sprite)
+                currentSprites.add(currentSprites.size - depth, sprite)
             }
 
             override fun disableSprite(sprite: Drawable): () -> Unit {
@@ -266,20 +262,18 @@ fun ktge(
         backgroundColor = background
 
         extensions.forEach(::extend)
-        var lastDraw = 0.0
+        var lastTime = seconds
+        var secsToNextDraw = 0.0
 
         extend {
             frameRate?.let {
-                launch {
-                    val msPerFrame = 1000.0 / frameRate
-                    val msSinceLastDraw = (seconds - lastDraw) * 1000
-                    val d = (msPerFrame - msSinceLastDraw).toLong()
-
-                    if (d > 0L) delay(d)
-
-                    lastDraw = seconds
-
-                    window.requestDraw()
+                secsToNextDraw -= seconds - lastTime
+                lastTime = seconds
+                if (secsToNextDraw <= 0) {
+                    secsToNextDraw += 1 / it
+                }
+                else {
+                    return@extend
                 }
             }
             for (spr in currentSprites) {
