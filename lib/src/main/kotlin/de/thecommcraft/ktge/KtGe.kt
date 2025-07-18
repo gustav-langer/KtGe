@@ -278,7 +278,7 @@ fun ktge(
                     secsToNextDraw += 1 / it.toDouble()
                 }
                 else {
-                    Thread.sleep(secsToNextDraw.seconds.toJavaDuration())
+                    Thread.sleep((secsToNextDraw * 1000).toLong())
                     secsToNextDraw -= seconds - lastTime
                     lastTime = seconds
                     if (secsToNextDraw <= 0.0) {
