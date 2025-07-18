@@ -262,10 +262,13 @@ fun ktge(
         backgroundColor = background
 
         extensions.forEach(::extend)
-        var lastTime = seconds
+        var lastTime = 0.0
         var secsToNextDraw = 0.0
 
         extend {
+            if (lastTime == 0.0) {
+                lastTime = seconds
+            }
             frameRate?.let {
                 secsToNextDraw -= seconds - lastTime
                 lastTime = seconds
