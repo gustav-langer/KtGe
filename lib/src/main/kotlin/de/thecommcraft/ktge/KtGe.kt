@@ -1,11 +1,13 @@
 package de.thecommcraft.ktge
 
+import kotlinx.coroutines.delay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import java.util.Collections
 import java.util.WeakHashMap
+import kotlin.time.Duration.Companion.seconds
 
 typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
@@ -276,7 +278,14 @@ fun ktge(
                     secsToNextDraw += 1 / it.toDouble()
                 }
                 else {
-                    return@extend
+                    launch {
+                        delay(secsToNextDraw.seconds)
+                    }
+                    secsToNextDraw -= seconds - lastTime
+                    lastTime = seconds
+                    if (secsToNextDraw <= 0.0) {
+                        secsToNextDraw += 1 / it.toDouble()
+                    }
                 }
             }
             for (spr in currentSprites) {
