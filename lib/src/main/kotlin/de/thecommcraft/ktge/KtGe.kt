@@ -133,7 +133,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     override fun update() {
         val scheduledCopy = scheduledCode.toList()
         scheduledCode.clear()
-        scheduledCopy.forEach(::run)
+        scheduledCopy.forEach(::apply)
         runEachFrame.forEach(::run)
         for (spr in childSprites) spr.update()
     }
@@ -269,8 +269,8 @@ fun ktge(
             frameRate?.let {
                 secsToNextDraw -= seconds - lastTime
                 lastTime = seconds
-                if (secsToNextDraw <= 0) {
-                    secsToNextDraw += 1 / it
+                if (secsToNextDraw <= 0.0) {
+                    secsToNextDraw += 1 / it.toDouble()
                 }
                 else {
                     return@extend
