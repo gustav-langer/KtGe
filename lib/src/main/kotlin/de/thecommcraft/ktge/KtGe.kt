@@ -1,6 +1,5 @@
 package de.thecommcraft.ktge
 
-import kotlinx.coroutines.delay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.events.Event
@@ -8,6 +7,7 @@ import org.openrndr.math.Vector2
 import java.util.Collections
 import java.util.WeakHashMap
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
@@ -278,9 +278,7 @@ fun ktge(
                     secsToNextDraw += 1 / it.toDouble()
                 }
                 else {
-                    launch {
-                        delay(secsToNextDraw.seconds)
-                    }
+                    Thread.sleep(secsToNextDraw.seconds.toJavaDuration())
                     secsToNextDraw -= seconds - lastTime
                     lastTime = seconds
                     if (secsToNextDraw <= 0.0) {
