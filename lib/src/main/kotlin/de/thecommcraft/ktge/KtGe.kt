@@ -2,6 +2,9 @@ package de.thecommcraft.ktge
 
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
+import org.openrndr.draw.Drawer
+import org.openrndr.draw.isolatedWithTarget
+import org.openrndr.draw.renderTarget
 import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import java.util.Collections
@@ -101,7 +104,15 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     /**
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
+    @Deprecated("Unclear name", replaceWith = ReplaceWith("Sprite.onNext"))
     fun <E> onFirst(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
+        return onNext(event, code)
+    }
+
+    /**
+     * Event listeners will be automatically disabled when the sprite is removed from its parent.
+     */
+    fun <E> onNext(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
         var eventListener = EventListener(event) {}
         var wasExecuted = false
         eventListener = EventListener(event) {
@@ -181,6 +192,13 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 }
 
+interface KtgeExtension {
+    var enabled: Boolean
+    fun setup(program: Program) {}
+    fun beforeDraw(drawer: Drawer, app: KtgeApp) {}
+    fun afterDraw(drawer: Drawer, app: KtgeApp) {}
+}
+
 abstract class CollidableSprite : Sprite(), PositionedCollider
 
 interface KtgeApp : Program, SpriteHost {
@@ -189,11 +207,19 @@ interface KtgeApp : Program, SpriteHost {
      */
     fun registerSprite(sprite: Drawable)
 
-    @Deprecated("Access SpriteHost::currentSprites instead.")
+    @Deprecated("Access KtgeApp.currentSprites instead.")
     fun getTotalDepth(): Int
 
     @Deprecated("Define a SpriteHost with custom draw function instead to control draw order.")
     fun setDepth(sprite: Drawable, depth: Int)
+
+    operator fun Drawable.unaryPlus() {
+        createSprite(this)
+    }
+
+    operator fun Drawable.unaryMinus() {
+        removeSprite(this)
+    }
 }
 
 // Main
@@ -202,8 +228,8 @@ fun ktge(
     initialize: List<ToInitialize> = listOf(),
     config: BuildFun<Configuration> = {},
     background: ColorRGBa? = ColorRGBa.BLACK,
-    frameRate: Long? = null,
-    extensions: List<Extension> = listOf()
+    frameRate: Int = 60,
+    extensions: List<KtgeExtension> = listOf()
 ) = application {
     configure(config)
 
@@ -261,9 +287,11 @@ fun ktge(
         sprites.forEach(appImpl::createSprite)
         initialize.forEach { it.init(appImpl, appImpl, appImpl) }
 
-        backgroundColor = background
+        var canvas = renderTarget(width, height, window.contentScale) {
+            colorBuffer()
+            depthBuffer()
+        }
 
-        extensions.forEach(::extend)
         var lastTime = 0.0
         var secsToNextDraw = 0.0
 
@@ -271,18 +299,35 @@ fun ktge(
             if (lastTime == 0.0) {
                 lastTime = seconds
             }
-            frameRate?.let {
-                secsToNextDraw -= seconds - lastTime
-                lastTime = seconds
-                if (secsToNextDraw > 0.0) Thread.sleep((secsToNextDraw * 1000).toLong() + 30L)
-                secsToNextDraw += 1 / it.toDouble()
+            if (width > 0 && height > 0 && (canvas.width != width || canvas.height != height || canvas.contentScale != window.contentScale)) {
+                canvas.let {
+                    it.colorBuffer(0).destroy()
+                    it.detachColorAttachments()
+                    it.destroy()
+                }
+                canvas = renderTarget(width, height, window.contentScale) {
+                    colorBuffer()
+                    depthBuffer()
+                }
             }
-            for (spr in currentSprites) {
-                spr.update()
+            secsToNextDraw -= seconds - lastTime
+            lastTime = seconds
+            if (secsToNextDraw <= 0.0) {
+                for (spr in currentSprites) {
+                    spr.update()
+                }
+                val enabledExtensions = extensions.filter(KtgeExtension::enabled)
+                drawer.isolatedWithTarget(canvas) {
+                    background?.let { drawer.clear(it) }
+                    enabledExtensions.forEach { it.beforeDraw(drawer, appImpl) }
+                    for (spr in currentSprites) {
+                        spr.draw()
+                    }
+                    enabledExtensions.reversed().forEach { it.afterDraw(drawer, appImpl) }
+                }
+                secsToNextDraw = secsToNextDraw.mod(1 / frameRate.toDouble())
             }
-            for (spr in currentSprites) {
-                spr.draw()
-            }
+            drawer.image(canvas.colorBuffer(0))
         }
     }
 }

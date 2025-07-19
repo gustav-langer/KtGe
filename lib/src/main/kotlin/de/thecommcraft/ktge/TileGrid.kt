@@ -9,27 +9,26 @@ import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 
-open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
-    Drawable {
-    lateinit var program: Program
-    lateinit var app: KtgeApp
+class TileEvent {
+    val change = Event<Unit>("change")
+}
+
+open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int = gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
+    Sprite() {
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
-    private val runEachFrame: MutableList<BuildFun<TileGrid>> = mutableListOf()
-    private val runOnChange: MutableList<TileGrid.() -> Unit> = mutableListOf()
 
-    var position: Vector2 = Vector2.ZERO
+    val event = TileEvent()
     val tiles: MutableList<MutableList<Int>> = tiles ?: MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
 
-    private lateinit var renderTarget: RenderTarget
+    private var renderTarget: RenderTarget? = null
 
-    var rect = Rectangle(0.0, 0.0, gridWidth.toDouble(), gridHeight.toDouble())
+    val rect
+        get() = Rectangle(position, gridWidth.toDouble() * tileSize, gridHeight.toDouble() * tileSize)
 
     fun tileType(id: Int, costume: Costume) {
         tileTypes[id] = costume
     }
-
-    fun frame(code: BuildFun<TileGrid>) = runEachFrame.add(code)
 
     operator fun get(x: Int, y: Int): Int {
         return tiles[x][y]
@@ -38,7 +37,7 @@ open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=g
     operator fun set(x: Int, y: Int, value: Int) {
         tiles[x][y] = value
         drawTile(x, y)
-        runOnChange.forEach { it() }
+        event.change.trigger(Unit)
     }
 
     fun copyTo(tileGrid: TileGrid) {
@@ -55,48 +54,52 @@ open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int=g
         this.tiles.removeIf { true }
         tiles.forEach(this.tiles::add)
         regenerateRenderTarget()
-        runOnChange.forEach { it() }
-        rect = Rectangle(0.0, 0.0, gridWidth.toDouble(), gridHeight.toDouble())
+        event.change.trigger(Unit)
     }
 
     private fun drawTile(gridX: Int, gridY: Int) {
-        program.drawer.isolatedWithTarget(renderTarget) {
-            program.drawer.ortho(renderTarget)
-            val position = (IntVector2(gridX, gridY) * tileSize).vector2
-            tileTypes[tiles[gridX][gridY]]?.draw(program, position)
-        }
-    }
-
-    override fun init(parent: SpriteHost, program: Program, app: KtgeApp) {
-        this.program = program
-        this.app = app
-        regenerateRenderTarget(initFun)
-        program.run {
-            window.sized.listen {
-                program.drawer.ortho(renderTarget)
+        renderTarget?.let {
+            program.drawer.isolatedWithTarget(it) {
+                program.drawer.ortho(it)
+                drawTileHere(gridX, gridY)
             }
         }
     }
 
+    private fun drawTileHere(gridX: Int, gridY: Int) {
+        val position = (IntVector2(gridX, gridY) * tileSize).vector2
+        tileTypes[tiles[gridX][gridY]]?.draw(program, position)
+    }
+
+    override fun uninit() {
+        this.renderTarget?.let {
+            it.colorBuffer(0).destroy()
+            it.detachColorAttachments()
+            it.destroy()
+        }
+        super.uninit()
+    }
+
+    override fun initSprite() {
+        regenerateRenderTarget(initFun)
+        costume(DrawerCostume {
+            renderTarget?.let { it1 -> program.drawer.image(it1.colorBuffer(0), it) }
+        })
+    }
+
     private fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
+        renderTarget?.let {
+            it.colorBuffer(0).destroy()
+            it.detachColorAttachments()
+            it.destroy()
+        }
         renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight, 1.0) { colorBuffer() }
         initFun()
-        (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTile(x, y) } }
-    }
-
-    fun onChange(changeFun: TileGrid.() -> Unit): Unit {
-        runOnChange.add(changeFun)
-    }
-
-    fun <E> on(event: Event<E>, code: TileGrid.(E) -> Unit) {
-        event.listen { code(it) }
-    }
-
-    override fun update() {
-        for (f in runEachFrame) f()
-    }
-
-    override fun draw() {
-        program.drawer.image(renderTarget.colorBuffer(0), position)
+        renderTarget?.let {
+            program.drawer.isolatedWithTarget(it) {
+                program.drawer.ortho(it)
+                (0..<gridWidth).forEach { x -> (0..<gridHeight).forEach { y -> drawTileHere(x, y) } }
+            }
+        }
     }
 }
