@@ -2,14 +2,21 @@ package de.thecommcraft.ktge
 
 import org.openrndr.events.Event
 
-class EventListener<E>(val event: Event<E>, val eventListener: (E) -> Unit) {
-    fun unlisten() {
+open class EventListener<E>(open val event: Event<E>, open val eventListener: (E) -> Unit) : OwnedResource {
+    open fun unlisten() {
         event.cancel(eventListener)
     }
-    fun listen() {
+    open fun listen() {
         event.listen(eventListener)
     }
-    fun listenOnce() {
-        event.listenOnce(eventListener)
+    override fun cleanUp() {
+        this.unlisten()
+    }
+}
+
+class OneTimeEventListener<E>(event: Event<E>, val parent: Sprite, eventListener: (E) -> Unit) : EventListener<E>(event, eventListener) {
+    override val eventListener: (E) -> Unit = {
+        parent.removeOwnedResource(parent)
+        eventListener(it)
     }
 }

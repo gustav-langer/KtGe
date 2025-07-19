@@ -16,9 +16,12 @@ typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
 typealias SpriteCode = BuildFun<Sprite>
 
-interface ToInitialize {
+interface ToInitialize : OwnedResource {
     fun init(parent: SpriteHost, program: Program, app: KtgeApp)
     fun uninit() {}
+    override fun cleanUp() {
+        uninit()
+    }
 }
 
 interface Positioned {
@@ -55,13 +58,22 @@ interface SpriteHost {
     fun disableSprites(predicate: (Drawable) -> Boolean): Map<Drawable, () -> Unit>
 }
 
+/**
+ * A resource owned by exactly one sprite that should be cleaned up with that sprite.
+ */
+interface OwnedResource {
+    fun cleanUp()
+}
+
 abstract class Sprite : Drawable, SpriteHost, Positioned {
     lateinit var parent: SpriteHost
     lateinit var program: Program
     lateinit var app: KtgeApp
 
     private val eventListeners: MutableMap<EventListener<*>, Unit> = Collections.synchronizedMap(WeakHashMap())
+    private val ownedResources: MutableSet<OwnedResource> = mutableSetOf()
 
+    private var dead = false
     override var position: Vector2 = Vector2.ZERO
     var costumeIdx: Int = 0
     var costumeName: String?
@@ -98,29 +110,18 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         val eventListener = EventListener(event) { this.code(it) }
         eventListeners[eventListener] = Unit
         eventListener.listen()
+        addOwnedResource(eventListener)
         return eventListener
     }
 
     /**
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
-    @Deprecated("Unclear name", replaceWith = ReplaceWith("Sprite.onNext"))
-    fun <E> onFirst(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
-        return onNext(event, code)
-    }
-
-    /**
-     * Event listeners will be automatically disabled when the sprite is removed from its parent.
-     */
     fun <E> onNext(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
-        var eventListener = EventListener(event) {}
-        var wasExecuted = false
-        eventListener = EventListener(event) {
-            eventListener.unlisten()
-            this.code(it)
-        }
+        val eventListener = OneTimeEventListener(event, this) { this.code(it) }
         eventListeners[eventListener] = Unit
         eventListener.listen()
+        addOwnedResource(eventListener)
         return eventListener
     }
 
@@ -138,50 +139,67 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun uninit() {
-        eventListeners.toList().forEach { (t, _) -> t.unlisten() }
-        childSprites.toList().forEach(this::removeSprite)
+        dead = true
+        eventListeners.clear()
+        childSprites.clear()
+        ownedResources.forEach(OwnedResource::cleanUp)
+        ownedResources.clear()
         uninitSprite()
     }
 
     override fun update() {
+        check(!dead) { "Tried to draw a sprite that was already removed." }
         val scheduledCopy = scheduledCode.toList()
         scheduledCode.clear()
-        scheduledCopy.forEach(::apply)
-        runEachFrame.forEach(::run)
-        for (spr in childSprites) spr.update()
+        scheduledCopy.forEach(this::run)
+        runEachFrame.forEach(this::run)
+        childSprites.forEach(Drawable::update)
     }
 
     override fun draw() {
         costumes.getOrNull(costumeIdx)?.draw(program, position)
-        for (spr in childSprites) spr.draw()
+        childSprites.forEach(Drawable::draw)
     }
 
     override fun createSprite(sprite: Drawable) {
         childSprites.add(sprite)
+        addOwnedResource(sprite)
         app.registerSprite(sprite)
         sprite.init(this, program, app)
     }
 
     override fun removeSprite(sprite: Drawable) {
-        sprite.uninit()
+        removeOwnedResource(sprite)
         childSprites.remove(sprite)
     }
 
     override fun removeSprites(predicate: (Drawable) -> Boolean) {
         childSprites.removeIf {
             val result = predicate(it)
-            if (result) it.uninit()
+            if (result) removeOwnedResource(it)
             result
         }
     }
 
     override fun disableSprite(sprite: Drawable): () -> Unit {
         childSprites.remove(sprite)
-        return { childSprites.add(sprite) }
+        return {
+            check(!dead) { "Tried to reenable a sprite whose parent was already removed." }
+            childSprites.add(sprite)
+        }
     }
 
     override fun disableSprites(predicate: (Drawable) -> Boolean): Map<Drawable, () -> Unit> {
         return childSprites.filter(predicate).associateWith(this::disableSprite)
+    }
+
+    fun addOwnedResource(ownedResource: OwnedResource) {
+        ownedResources.add(ownedResource)
+    }
+
+    fun removeOwnedResource(ownedResource: OwnedResource) {
+        ownedResource.cleanUp()
+        ownedResources.remove(ownedResource)
     }
 
     companion object {
