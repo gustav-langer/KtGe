@@ -9,19 +9,21 @@ import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 
-class TileEvent {
-    val change = Event<Unit>("change")
-}
-
 open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int = gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
     Sprite() {
+
+    companion object {
+        class TileEvent {
+            val change = Event<Unit>("change")
+        }
+    }
 
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
 
     val event = TileEvent()
     val tiles: MutableList<MutableList<Int>> = tiles ?: MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
 
-    private var renderTarget: RenderTarget? = null
+    private var renderTarget: OwnedRenderTarget? = null
 
     val rect
         get() = Rectangle(position, gridWidth.toDouble() * tileSize, gridHeight.toDouble() * tileSize)
@@ -71,15 +73,6 @@ open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int =
         tileTypes[tiles[gridX][gridY]]?.draw(program, position)
     }
 
-    override fun uninit() {
-        this.renderTarget?.let {
-            it.colorBuffer(0).destroy()
-            it.detachColorAttachments()
-            it.destroy()
-        }
-        super.uninit()
-    }
-
     override fun initSprite() {
         regenerateRenderTarget(initFun)
         costume(DrawerCostume {
@@ -88,13 +81,11 @@ open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int =
     }
 
     private fun regenerateRenderTarget(initFun: BuildFun<TileGrid> = {}) {
-        renderTarget?.let {
-            it.colorBuffer(0).destroy()
-            it.detachColorAttachments()
-            it.destroy()
-        }
-        renderTarget = renderTarget(tileSize * gridWidth, tileSize * gridHeight, 1.0) { colorBuffer() }
-        initFun()
+        renderTarget?.let { removeOwnedResource(it) }
+        renderTarget = OwnedRenderTarget.of(tileSize * gridWidth, tileSize * gridHeight, 1.0) {
+            colorBuffer()
+        }.add()
+        this.initFun()
         renderTarget?.let {
             program.drawer.isolatedWithTarget(it) {
                 program.drawer.ortho(it)

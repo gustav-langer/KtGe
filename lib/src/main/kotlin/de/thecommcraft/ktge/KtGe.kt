@@ -107,10 +107,9 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
     fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
-        val eventListener = EventListener(event) { this.code(it) }
+        val eventListener = EventListener(event) { this.code(it) }.add()
         eventListeners[eventListener] = Unit
         eventListener.listen()
-        addOwnedResource(eventListener)
         return eventListener
     }
 
@@ -118,10 +117,9 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
     fun <E> onNext(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
-        val eventListener = OneTimeEventListener(event, this) { this.code(it) }
+        val eventListener = OneTimeEventListener(event, this) { this.code(it) }.add()
         eventListeners[eventListener] = Unit
         eventListener.listen()
-        addOwnedResource(eventListener)
         return eventListener
     }
 
@@ -163,8 +161,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun createSprite(sprite: Drawable) {
-        childSprites.add(sprite)
-        addOwnedResource(sprite)
+        childSprites.add(sprite.add())
         app.registerSprite(sprite)
         sprite.init(this, program, app)
     }
@@ -196,6 +193,11 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
 
     fun addOwnedResource(ownedResource: OwnedResource) {
         ownedResources.add(ownedResource)
+    }
+
+    fun<T: OwnedResource> T.add(): T {
+        addOwnedResource(this)
+        return this
     }
 
     fun removeOwnedResource(ownedResource: OwnedResource) {
@@ -313,6 +315,7 @@ fun ktge(
 
         var lastTime = 0.0
         var secsToNextDraw = 0.0
+        backgroundColor = background
 
         extend {
             if (lastTime == 0.0) {
