@@ -148,7 +148,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun update() {
-        check(!dead) { "Tried to draw a sprite that was already removed." }
+        check(!dead) { "Tried to update a sprite that was already removed." }
         val scheduledCopy = scheduledCode.toList()
         scheduledCode.clear()
         scheduledCopy.forEach(this::run)
@@ -157,6 +157,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     }
 
     override fun draw() {
+        check(!dead) { "Tried to draw a sprite that was already removed." }
         costumes.getOrNull(costumeIdx)?.draw(program, position)
         childSprites.forEach(Drawable::draw)
     }

@@ -14,7 +14,7 @@ open class EventListener<E>(open val event: Event<E>, open val eventListener: (E
     }
 }
 
-class OneTimeEventListener<E>(event: Event<E>, val parent: Sprite, eventListener: (E) -> Unit) : EventListener<E>(event, eventListener) {
+class OneTimeEventListener<E>(event: Event<E>, private val parent: Sprite, eventListener: (E) -> Unit) : EventListener<E>(event, eventListener) {
     override val eventListener: (E) -> Unit = {
         parent.removeOwnedResource(parent)
         eventListener(it)
