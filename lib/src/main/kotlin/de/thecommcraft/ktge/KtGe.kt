@@ -272,11 +272,9 @@ fun ktge(
                 lastTime = seconds
             }
             frameRate?.let {
-                while (secsToNextDraw > 0.0) {
-                    secsToNextDraw -= seconds - lastTime
-                    lastTime = seconds
-                    if (secsToNextDraw > 0.0) Thread.sleep((secsToNextDraw * 1000).toLong())
-                }
+                secsToNextDraw -= seconds - lastTime
+                lastTime = seconds
+                if (secsToNextDraw > 0.0) Thread.sleep((secsToNextDraw * 1000).toLong() + 30L)
                 secsToNextDraw += 1 / it.toDouble()
             }
             for (spr in currentSprites) {
