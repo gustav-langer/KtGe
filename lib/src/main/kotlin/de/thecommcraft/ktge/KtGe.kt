@@ -216,6 +216,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
 interface KtgeExtension {
     var enabled: Boolean
     fun setup(program: Program) {}
+    fun beforeUpdate(app: KtgeApp) {}
+    fun afterUpdate(app: KtgeApp) {}
     fun beforeDraw(drawer: Drawer, app: KtgeApp) {}
     fun afterDraw(drawer: Drawer, app: KtgeApp) {}
 }
@@ -223,6 +225,7 @@ interface KtgeExtension {
 abstract class CollidableSprite : Sprite(), PositionedCollider
 
 interface KtgeApp : Program, SpriteHost {
+    val deltaTime: Double
     /**
      * Should be called on creation of any sprite. Should be expected to only work once for every sprite.
      */
@@ -256,7 +259,11 @@ fun ktge(
 
     program {
         val currentSprites: MutableList<Drawable> = mutableListOf()
+        var computedDeltaTime = 0.0
+        var lastFrameTime = seconds
         val appImpl = object : KtgeApp, Program by this {
+            override val deltaTime
+                get() = computedDeltaTime
             override val currentSprites: List<Drawable>
                 get() = currentSprites
             val initialized: WeakHashMap<Drawable, Boolean> = WeakHashMap()
@@ -335,16 +342,25 @@ fun ktge(
             secsToNextDraw -= seconds - lastTime
             lastTime = seconds
             if (secsToNextDraw <= 0.0) {
+                val enabledExtensions = extensions.filter(KtgeExtension::enabled)
+
+                enabledExtensions.forEach { it.beforeUpdate(appImpl) }
+
                 for (spr in currentSprites) {
                     spr.update()
                 }
-                val enabledExtensions = extensions.filter(KtgeExtension::enabled)
+
+                enabledExtensions.reversed().forEach { it.afterUpdate(appImpl) }
+
                 drawer.isolatedWithTarget(canvas) {
                     background?.let { drawer.clear(it) }
+
                     enabledExtensions.forEach { it.beforeDraw(drawer, appImpl) }
+
                     for (spr in currentSprites) {
                         spr.draw()
                     }
+
                     enabledExtensions.reversed().forEach { it.afterDraw(drawer, appImpl) }
                 }
                 secsToNextDraw = secsToNextDraw.mod(1 / frameRate.toDouble())
