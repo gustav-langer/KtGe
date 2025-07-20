@@ -7,7 +7,9 @@ import org.openrndr.shape.IntRectangle
 import org.openrndr.shape.Rectangle
 import org.openrndr.writer
 import java.nio.file.Path
+import kotlin.io.path.Path
 import java.io.File
+import kotlin.io.path.pathString
 
 fun loadImage(path: Path): ColorBuffer {
     return loadImage(path.toFile())
@@ -32,13 +34,49 @@ open class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
     }
 }
 
-open class ImageCostume(
+open class ImageCostume internal constructor(
     img: ColorBuffer,
     val drawerConfig: BuildFun<Drawer> = {},
     scale: Int = 1,
     scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
 ) : Costume {
-    val buf = colorBuffer(img.width * scale, img.height * scale)
+    companion object {
+        fun from(
+            path: String,
+            drawerConfig: BuildFun<Drawer> = {},
+            scale: Int = 1,
+            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
+        ): ImageCostume {
+            val img = loadImage(path)
+            val costume = ImageCostume(img, drawerConfig, scale, scaleType)
+            img.destroy()
+            return costume
+        }
+        fun from(
+            path: Path,
+            drawerConfig: BuildFun<Drawer> = {},
+            scale: Int = 1,
+            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
+        ): ImageCostume = from(path.pathString, drawerConfig, scale, scaleType)
+        fun from(
+            path: File,
+            drawerConfig: BuildFun<Drawer> = {},
+            scale: Int = 1,
+            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
+        ): ImageCostume = from(path.path, drawerConfig, scale, scaleType)
+
+        /**
+         * Only use when the original [ColorBuffer] stays alive.
+         */
+        fun from(
+            colorBuffer: ColorBuffer,
+            drawerConfig: BuildFun<Drawer> = {},
+            scale: Int = 1,
+            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
+        ): ImageCostume = ImageCostume(colorBuffer, drawerConfig, scale, scaleType)
+    }
+
+    private val buf = colorBuffer(img.width * scale, img.height * scale)
 
     init {
         img.copyTo(
