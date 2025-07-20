@@ -155,7 +155,7 @@ class GameWindow(
         override fun initSprite() = program.run {
             position = Vector2(x = window.size.x - index * barHeight, y = 0.0)
 
-            costume(ImageCostume(img = loadImage("data/images/icons/$path")))
+            costume(ImageCostume.from("data/images/icons/$path"))
 
             on(window.sized) {
                 position = Vector2(x = width - index * barHeight, y = 0.0)
