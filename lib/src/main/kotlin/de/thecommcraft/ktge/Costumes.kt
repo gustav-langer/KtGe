@@ -21,8 +21,9 @@ suspend fun loadImageSuspend(file: File): ColorBuffer {
     return loadImageSuspend(file.toString())
 }
 
-interface Costume {
+interface Costume : OwnedResource {
     fun draw(program: Program, position: Vector2)
+    override fun cleanUp() {}
 }
 
 open class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
@@ -51,6 +52,10 @@ open class ImageCostume(
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig()
         drawer.image(buf, position)
+    }
+
+    override fun cleanUp() {
+        buf.destroy()
     }
 }
 

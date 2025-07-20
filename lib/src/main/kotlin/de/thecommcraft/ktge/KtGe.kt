@@ -96,6 +96,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     private val scheduledCode: MutableList<SpriteCode> = mutableListOf()
 
     fun costume(costume: Costume, name: String? = null) {
+        addOwnedResource(costume)
         costumes.addNullable(costume, name)
     }
 
