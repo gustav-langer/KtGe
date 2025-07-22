@@ -10,6 +10,7 @@ import org.openrndr.draw.loadFont
 import org.openrndr.draw.loadImage
 import org.openrndr.draw.tint
 import org.openrndr.math.Vector2
+import kotlin.io.path.Path
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -38,8 +39,9 @@ val openrndrText = sprite {
 }
 
 val background = sprite {
-    costume(ImageCostume.from("data/images/pm5544.png",
-        drawerConfig = { drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2)) }))
+    costume(ImageCostume.from(Path("data/images/pm5544.png")) {
+        drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2))
+    })
 }
 
 fun main() = ktge(

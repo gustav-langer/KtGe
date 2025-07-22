@@ -9,6 +9,7 @@ import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.loadImage
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
+import kotlin.io.path.Path
 import kotlin.math.pow
 
 enum class DragType {
@@ -155,7 +156,7 @@ class GameWindow(
         override fun initSprite() = program.run {
             position = Vector2(x = window.size.x - index * barHeight, y = 0.0)
 
-            costume(ImageCostume.from("data/images/icons/$path"))
+            costume(ImageCostume.from(Path("data/images/icons/$path")))
 
             on(window.sized) {
                 position = Vector2(x = width - index * barHeight, y = 0.0)

@@ -2,11 +2,21 @@ package de.thecommcraft.ktge
 
 import org.openrndr.draw.ColorBuffer
 import org.openrndr.draw.MagnifyingFilter
+import java.nio.file.Path
+import kotlin.io.path.Path
+
+fun String.path() = Path(this)
+
+fun Path.editableImage() = EditableImage.from(this)
 
 /**
  * All methods modify the object and return it afterward by default unless specified otherwise.
  */
-open class EditableImage internal constructor(private var colorBuffer: ColorBuffer) {
+open class EditableImage internal constructor(var colorBuffer: ColorBuffer) {
+    companion object {
+        fun from(path: Path) = EditableImage(loadImage(path))
+    }
+
     var finalized: Boolean = false
         internal set
     fun scaleBy(scale: Int, scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST) = apply {
