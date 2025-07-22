@@ -9,8 +9,6 @@ import org.openrndr.events.Event
 import org.openrndr.math.Vector2
 import java.util.Collections
 import java.util.WeakHashMap
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
@@ -65,13 +63,23 @@ interface OwnedResource {
     fun cleanUp()
 }
 
-abstract class Sprite : Drawable, SpriteHost, Positioned {
+interface ResourceHost {
+    val ownedResources: List<OwnedResource>
+
+    fun addOwnedResource(resource: OwnedResource)
+
+    fun removeOwnedResource(resource: OwnedResource)
+}
+
+abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
     lateinit var parent: SpriteHost
     lateinit var program: Program
     lateinit var app: KtgeApp
 
     private val eventListeners: MutableMap<EventListener<*>, Unit> = Collections.synchronizedMap(WeakHashMap())
-    private val ownedResources: MutableSet<OwnedResource> = mutableSetOf()
+    private val ownedResourceSet: MutableSet<OwnedResource> = mutableSetOf()
+    override val ownedResources: List<OwnedResource>
+        get() = ownedResourceSet.toList()
 
     private var dead = false
     override var position: Vector2 = Vector2.ZERO
@@ -96,8 +104,11 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
     private val scheduledCode: MutableList<SpriteCode> = mutableListOf()
 
     fun costume(costume: Costume, name: String? = null) {
-        addOwnedResource(costume)
         costumes.addNullable(costume, name)
+    }
+
+    fun ownedImage(image: OwnedImage, name: String? = null) {
+        addOwnedResource(image)
     }
 
     fun frame(code: SpriteCode) {
@@ -141,8 +152,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         dead = true
         eventListeners.clear()
         childSprites.clear()
-        ownedResources.forEach(OwnedResource::cleanUp)
-        ownedResources.clear()
+        ownedResourceSet.forEach(OwnedResource::cleanUp)
+        ownedResourceSet.clear()
         uninitSprite()
     }
 
@@ -192,8 +203,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         return childSprites.filter(predicate).associateWith(this::disableSprite)
     }
 
-    fun addOwnedResource(ownedResource: OwnedResource) {
-        ownedResources.add(ownedResource)
+    override fun addOwnedResource(resource: OwnedResource) {
+        ownedResourceSet.add(resource)
     }
 
     fun<T: OwnedResource> T.add(): T {
@@ -201,9 +212,9 @@ abstract class Sprite : Drawable, SpriteHost, Positioned {
         return this
     }
 
-    fun removeOwnedResource(ownedResource: OwnedResource) {
-        ownedResource.cleanUp()
-        ownedResources.remove(ownedResource)
+    override fun removeOwnedResource(resource: OwnedResource) {
+        resource.cleanUp()
+        ownedResourceSet.remove(resource)
     }
 
     companion object {
@@ -225,7 +236,7 @@ interface KtgeExtension {
 
 abstract class CollidableSprite : Sprite(), PositionedCollider
 
-interface KtgeApp : Program, SpriteHost {
+interface KtgeApp : Program, SpriteHost, ResourceHost {
     val deltaTime: Double
     /**
      * Should be called on creation of any sprite. Should be expected to only work once for every sprite.
@@ -263,6 +274,9 @@ fun ktge(
         var computedDeltaTime = 0.0
         var lastFrameTime = seconds
         val appImpl = object : KtgeApp, Program by this {
+            private val ownedResourceSet: MutableSet<OwnedResource> = mutableSetOf()
+            override val ownedResources: List<OwnedResource>
+                get() = ownedResourceSet.toList()
             override val deltaTime
                 get() = computedDeltaTime
             override val currentSprites: List<Drawable>
@@ -311,6 +325,15 @@ fun ktge(
                 initialized[sprite]?.let { check(!it) }
                 initialized[sprite] = true
             }
+
+            override fun addOwnedResource(resource: OwnedResource) {
+                ownedResourceSet.add(resource)
+            }
+
+            override fun removeOwnedResource(resource: OwnedResource) {
+                resource.cleanUp()
+                ownedResourceSet.remove(resource)
+            }
         }
 
         sprites.forEach(appImpl::createSprite)
@@ -343,6 +366,8 @@ fun ktge(
             secsToNextDraw -= seconds - lastTime
             lastTime = seconds
             if (secsToNextDraw <= 0.0) {
+                computedDeltaTime = seconds - lastFrameTime
+                lastFrameTime = seconds
                 val enabledExtensions = extensions.filter(KtgeExtension::enabled)
 
                 enabledExtensions.forEach { it.beforeUpdate(appImpl) }

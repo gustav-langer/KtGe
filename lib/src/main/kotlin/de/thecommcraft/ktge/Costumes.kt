@@ -2,9 +2,11 @@ package de.thecommcraft.ktge
 
 import org.openrndr.Program
 import org.openrndr.draw.*
+import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.IntRectangle
 import org.openrndr.shape.Rectangle
+import org.openrndr.shape.rectangleBounds
 import org.openrndr.writer
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -23,9 +25,8 @@ suspend fun loadImageSuspend(file: File): ColorBuffer {
     return loadImageSuspend(file.toString())
 }
 
-interface Costume : OwnedResource {
+interface Costume {
     fun draw(program: Program, position: Vector2)
-    override fun cleanUp() {}
 }
 
 open class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
@@ -34,66 +35,49 @@ open class DrawerCostume(val code: Program.(Vector2) -> Unit) : Costume {
     }
 }
 
+internal fun ColorBuffer.scaledTo(width: Int, height: Int, scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST): ColorBuffer {
+    val buf = colorBuffer(width, height, contentScale, format, type, multisample, levels, session)
+    copyTo(
+        buf,
+        sourceRectangle = bounds.toInt(),
+        targetRectangle = buf.bounds.toInt(),
+        filter = scaleType
+    )
+    return buf
+}
+
+internal fun ColorBuffer.scaledBy(scale: Int, scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST) = scaledTo(width * scale, height * scale, scaleType)
+
+fun ColorBuffer.toOwnedImage(): OwnedImage = OwnedImage.Companion.OwnedImageImplementation(this)
+
+fun OwnedImage.toCostume(drawerConfig: BuildFun<Drawer> = {}) = ImageCostume.from(this, drawerConfig)
+
 open class ImageCostume internal constructor(
     img: ColorBuffer,
-    val drawerConfig: BuildFun<Drawer> = {},
-    scale: Int = 1,
-    scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
+    val drawerConfig: BuildFun<Drawer> = {}
 ) : Costume {
     companion object {
         fun from(
-            path: String,
+            path: Path,
             drawerConfig: BuildFun<Drawer> = {},
-            scale: Int = 1,
-            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
         ): ImageCostume {
             val img = loadImage(path)
-            val costume = ImageCostume(img, drawerConfig, scale, scaleType)
-            img.destroy()
+            val costume = ImageCostume(img, drawerConfig)
             return costume
         }
         fun from(
-            path: Path,
-            drawerConfig: BuildFun<Drawer> = {},
-            scale: Int = 1,
-            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
-        ): ImageCostume = from(path.pathString, drawerConfig, scale, scaleType)
-        fun from(
-            path: File,
-            drawerConfig: BuildFun<Drawer> = {},
-            scale: Int = 1,
-            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
-        ): ImageCostume = from(path.path, drawerConfig, scale, scaleType)
-
-        /**
-         * Only use when the original [ColorBuffer] stays alive.
-         */
-        fun from(
-            colorBuffer: ColorBuffer,
-            drawerConfig: BuildFun<Drawer> = {},
-            scale: Int = 1,
-            scaleType: MagnifyingFilter = MagnifyingFilter.NEAREST
-        ): ImageCostume = ImageCostume(colorBuffer, drawerConfig, scale, scaleType)
+            ownedImage: OwnedImage,
+            drawerConfig: BuildFun<Drawer> = {}
+        ): ImageCostume = ImageCostume(ownedImage.buf, drawerConfig)
     }
 
-    private val buf = colorBuffer(img.width * scale, img.height * scale)
-
-    init {
-        img.copyTo(
-            buf,
-            sourceRectangle = IntRectangle(0, 0, img.width, img.height),
-            targetRectangle = IntRectangle(0, 0, img.width * scale, img.height * scale),
-            filter = scaleType
-        )
-    }
+    private val buf = img
+    val width: Int by buf::width
+    val height: Int by buf::height
 
     override fun draw(program: Program, position: Vector2) = program.run {
         drawer.drawerConfig()
         drawer.image(buf, position)
-    }
-
-    override fun cleanUp() {
-        buf.destroy()
     }
 }
 
