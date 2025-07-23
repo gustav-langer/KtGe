@@ -4,6 +4,7 @@ import org.openrndr.math.Vector2
 import org.openrndr.shape.Circle
 import org.openrndr.shape.Rectangle
 import kotlin.math.abs
+import kotlin.properties.Delegates
 
 interface ColliderPrototype {
     fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
@@ -192,22 +193,34 @@ open class RotatedBoxColliderPrototype(
     }
 }
 
-open class DisplacedPositionedColliderPrototype(private val collider: ColliderPrototype, var offset: Vector2 = Vector2.ZERO) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
+open class DisplacedPositionedColliderPrototype(private val collider: ColliderPrototype, open var offset: Vector2 = Vector2.ZERO) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
     override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
         return collider.collides(myPos + offset, other, otherPos)
     }
 }
 
-open class CornerBoxColliderPrototype(
-    var width: Double,
-    var height: Double
-) : DisplacedPositionedColliderPrototype(BoxColliderPrototype(width, height), Vector2(width, height) / 2.0) {
-
-    fun correspondingRectangle(position: Vector2) = Rectangle(position, width, height)
-}
-
 infix fun ColliderPrototype.offset(offset: Vector2): DisplacedPositionedColliderPrototype {
     return DisplacedPositionedColliderPrototype(this, offset)
+}
+
+open class CornerBoxColliderPrototype(
+    width: Double,
+    height: Double
+) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
+
+    private val collider = BoxColliderPrototype(width, height)
+
+    var width by collider::width
+    var height by collider::height
+
+    val offset: Vector2
+        get() = Vector2(width, height) / 2.0
+
+    fun correspondingRectangle(position: Vector2) = Rectangle(position, width, height)
+
+    override fun collides(myPos: Vector2, other: ColliderPrototype, otherPos: Vector2): Boolean {
+        return collider.collides(myPos + offset, other, otherPos)
+    }
 }
 
 open class InvertedPositionedColliderPrototype(private val collider: ColliderPrototype) : ColliderPrototype, ExplicitCollidableWithAnyColliderPrototype {
