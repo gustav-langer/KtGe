@@ -198,6 +198,14 @@ open class DisplacedPositionedColliderPrototype(private val collider: ColliderPr
     }
 }
 
+open class CornerBoxColliderPrototype(
+    var width: Double,
+    var height: Double
+) : DisplacedPositionedColliderPrototype(BoxColliderPrototype(width, height), Vector2(width, height) / 2.0) {
+
+    fun correspondingRectangle(position: Vector2) = Rectangle(position, width, height)
+}
+
 infix fun ColliderPrototype.offset(offset: Vector2): DisplacedPositionedColliderPrototype {
     return DisplacedPositionedColliderPrototype(this, offset)
 }
