@@ -75,9 +75,9 @@ open class ImageCostume internal constructor(
     val width: Int by buf::width
     val height: Int by buf::height
 
-    override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.isolated(drawerConfig)
-        drawer.image(buf, position)
+    override fun draw(program: Program, position: Vector2) = program.drawer.isolated {
+        drawerConfig()
+        image(buf, position)
     }
 }
 
