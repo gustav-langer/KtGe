@@ -76,14 +76,14 @@ open class ImageCostume internal constructor(
     val height: Int by buf::height
 
     override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig()
+        drawer.isolated(drawerConfig)
         drawer.image(buf, position)
     }
 }
 
 open class TextCostume(var text: String, val font: FontMap, val drawerConfig: BuildFun<Drawer>) : Costume {
     override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig()
+        drawer.isolated(drawerConfig)
         drawer.fontMap = font
         drawer.text(text, position)
     }
@@ -91,7 +91,7 @@ open class TextCostume(var text: String, val font: FontMap, val drawerConfig: Bu
 
 open class MultiLineTextCostume(var text: String, val font: FontMap, var size: Vector2, val drawerConfig: BuildFun<Drawer>) : Costume {
     override fun draw(program: Program, position: Vector2) = program.run {
-        drawer.drawerConfig()
+        drawer.isolated(drawerConfig)
         drawer.fontMap = font
         writer {
             box = Rectangle(position, size.x, size.y)
