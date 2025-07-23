@@ -97,7 +97,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
         scheduledCode.clear()
         scheduledCopy.forEach(this::run)
         runEachFrame.forEach(this::run)
-        childSprites.forEach(Drawable::update)
+        childSprites.toList().forEach(Drawable::update)
     }
 
     override fun draw() {
