@@ -6,9 +6,9 @@ import org.openrndr.math.Vector2
 import java.util.*
 
 abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
-    lateinit var parent: SpriteHost
-    lateinit var program: Program
-    lateinit var app: KtgeApp
+    open lateinit var parent: SpriteHost
+    open lateinit var program: Program
+    open lateinit var app: KtgeApp
 
     private val eventListeners: MutableMap<EventListener<*>, Unit> = Collections.synchronizedMap(WeakHashMap())
     private val ownedResourceSet: MutableSet<OwnedResource> = mutableSetOf()
@@ -17,8 +17,8 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
 
     private var dead = false
     override var position: Vector2 = Vector2.ZERO
-    var costumeIdx: Int = 0
-    var costumeName: String?
+    open var costumeIdx: Int = 0
+    open var costumeName: String?
         get() = costumes.nameOf(costumeIdx)
         set(value) {
             value?.let {
@@ -27,7 +27,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
                 }
             }
         }
-    val currentCostume: Costume?
+    open val currentCostume: Costume?
         get() = costumes.getOrNull(costumeIdx)
 
     private val costumes: MutableNamedList<Costume, String> = mutableNamedListOf()
@@ -37,22 +37,22 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
     private val runEachFrame: MutableList<SpriteCode> = mutableListOf()
     private val scheduledCode: MutableList<SpriteCode> = mutableListOf()
 
-    fun costume(costume: Costume, name: String? = null) {
+    open fun costume(costume: Costume, name: String? = null) {
         costumes.addNullable(costume, name)
     }
 
-    fun ownedImage(image: OwnedImage, name: String? = null) {
+    open fun ownedImage(image: OwnedImage, name: String? = null) {
         addOwnedResource(image)
     }
 
-    fun frame(code: SpriteCode) {
+    open fun frame(code: SpriteCode) {
         runEachFrame.add(code)
     }
 
     /**
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
-    fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
+    open fun <E> on(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
         val eventListener = EventListener(event) { this.code(it) }.add()
         eventListeners[eventListener] = Unit
         eventListener.listen()
@@ -62,14 +62,14 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
     /**
      * Event listeners will be automatically disabled when the sprite is removed from its parent.
      */
-    fun <E> onNext(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
+    open fun <E> onNext(event: Event<E>, code: Sprite.(E) -> Unit): EventListener<E> {
         val eventListener = OneTimeEventListener(event, this) { this.code(it) }.add()
         eventListeners[eventListener] = Unit
         eventListener.listen()
         return eventListener
     }
 
-    fun schedule(code: SpriteCode) = scheduledCode.add(code)
+    open fun schedule(code: SpriteCode) = scheduledCode.add(code)
 
     protected abstract fun initSprite()
 
@@ -141,7 +141,11 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
         ownedResourceSet.add(resource)
     }
 
-    fun<T: OwnedResource> T.add(): T {
+    open fun addOwnedResource(resourceCleanUpFun: () -> Unit) {
+        addOwnedResource(OwnedResource(resourceCleanUpFun))
+    }
+
+    open fun<T: OwnedResource> T.add(): T {
         addOwnedResource(this)
         return this
     }
