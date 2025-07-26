@@ -82,6 +82,7 @@ abstract class CollidableSprite : Sprite(), PositionedCollider
 
 interface KtgeApp : Program, SpriteHost, ResourceHost {
     val deltaTime: Double
+    val keyTracker: KeyTracker
     /**
      * Should be called on creation of any sprite. Should be expected to only work once for every sprite.
      */
@@ -123,6 +124,7 @@ fun ktge(
                 get() = ownedResourceSet.toList()
             override val deltaTime
                 get() = computedDeltaTime
+            override val keyTracker = KeyTracker(keyboard)
             override val currentSprites: List<Drawable>
                 get() = currentSprites
             val initialized: WeakHashMap<Drawable, Boolean> = WeakHashMap()
