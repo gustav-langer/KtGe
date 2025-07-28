@@ -174,7 +174,7 @@ fun ktge(
                 ended.listenOnce {
                     if (endedTriggered) return@listenOnce
                     endedTriggered = true
-                    ownedResourceSet.forEach(::removeOwnedResource)
+                    ownedResourceSet.toSet().forEach(::removeOwnedResource)
                 }
             }
             override fun createSprite(sprite: Drawable) {
