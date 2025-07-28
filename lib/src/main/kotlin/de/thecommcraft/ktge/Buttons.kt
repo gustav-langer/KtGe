@@ -33,11 +33,11 @@ abstract class BoxButton(val size: Vector2): Sprite() {
         triggerDown()
         triggerUp()
     }
-    private inline fun triggerDown() {
+    private fun triggerDown() {
         down = true
         event.down.trigger(Unit)
     }
-    private inline fun triggerUp() {
+    private fun triggerUp() {
         down = false
         event.up.trigger(Unit)
     }

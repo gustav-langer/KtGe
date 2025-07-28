@@ -69,9 +69,18 @@ interface ResourceHost {
     fun removeOwnedResource(resource: OwnedResource)
 }
 
+sealed interface OverwriteType
+
+interface OverwriteMouseEvents : OverwriteType {
+    fun overwrite(mouseEvents: MouseEvents)
+}
+interface OverwriteKeyEvents : OverwriteType {
+    fun overwrite(keyEvents: KeyEvents)
+}
+
 interface KtgeExtension {
     var enabled: Boolean
-    fun setup(program: Program) {}
+    fun setup(app: KtgeApp) {}
     fun beforeUpdate(app: KtgeApp) {}
     fun afterUpdate(app: KtgeApp) {}
     fun beforeDraw(drawer: Drawer, app: KtgeApp) {}
@@ -81,8 +90,15 @@ interface KtgeExtension {
 abstract class CollidableSprite : Sprite(), PositionedCollider
 
 interface KtgeApp : Program, SpriteHost, ResourceHost {
+
     val deltaTime: Double
+
+    val overwriteKeyEvents: OverwriteKeyEvents
+
+    val overwriteMouseEvents: OverwriteMouseEvents
+
     val keyTracker: KeyTracker
+
     /**
      * Should be called on creation of any sprite. Should be expected to only work once for every sprite.
      */
@@ -119,16 +135,36 @@ fun ktge(
         var computedDeltaTime = 0.0
         var lastFrameTime = seconds
         val appImpl = object : KtgeApp, Program by this {
+
             private val ownedResourceSet: MutableSet<OwnedResource> = mutableSetOf()
             override val ownedResources: List<OwnedResource>
                 get() = ownedResourceSet.toList()
+
             override val deltaTime
                 get() = computedDeltaTime
-            override val keyTracker = KeyTracker(keyboard)
+
+            var currentMouseEvents = this@program.mouse
+            override val mouse get() = currentMouseEvents
+            override val overwriteMouseEvents = object : OverwriteMouseEvents {
+                override fun overwrite(mouseEvents: MouseEvents) {
+                    currentMouseEvents = mouseEvents
+                }
+            }
+            var currentKeyEvents = this@program.keyboard
+            override val keyboard get() = currentKeyEvents
+            override val overwriteKeyEvents = object : OverwriteKeyEvents {
+                override fun overwrite(keyEvents: KeyEvents) {
+                    currentKeyEvents = keyEvents
+                    keyTracker = KeyTracker(currentKeyEvents)
+                }
+            }
+            override var keyTracker = KeyTracker(keyboard)
+
             override val currentSprites: List<Drawable>
                 get() = currentSprites
             val initialized: WeakHashMap<Drawable, Boolean> = WeakHashMap()
             var endedTriggered = false
+
             init {
                 ended.listenOnce {
                     if (endedTriggered) return@listenOnce
