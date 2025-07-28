@@ -12,7 +12,7 @@ typealias ApplicableFun<T> = T.() -> Unit
 typealias BuildFun<T> = ApplicableFun<T>
 typealias SpriteCode = BuildFun<Sprite>
 
-interface ToInitialize : OwnedResource {
+fun interface ToInitialize : OwnedResource {
     fun init(parent: SpriteHost, program: Program, app: KtgeApp)
     fun uninit() {}
     override fun cleanUp() {
