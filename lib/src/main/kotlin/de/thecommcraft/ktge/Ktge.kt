@@ -227,6 +227,9 @@ fun ktge(
             }
         }
 
+        extensions.forEach {
+            it.setup(appImpl)
+        }
         sprites.forEach(appImpl::createSprite)
         initialize.forEach { it.init(appImpl, appImpl, appImpl) }
 
