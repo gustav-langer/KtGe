@@ -117,6 +117,8 @@ interface KtgeApp : Program, SpriteHost, ResourceHost {
     operator fun Drawable.unaryMinus() {
         removeSprite(this)
     }
+
+    fun exit()
 }
 
 // Main
@@ -134,6 +136,7 @@ fun ktge(
         val currentSprites: MutableList<Drawable> = mutableListOf()
         var computedDeltaTime = 0.0
         var lastFrameTime = seconds
+        var shouldExit = false
         val appImpl = object : KtgeApp, Program by this {
 
             private val ownedResourceSet: MutableSet<OwnedResource> = mutableSetOf()
@@ -142,6 +145,8 @@ fun ktge(
 
             override val deltaTime
                 get() = computedDeltaTime
+
+            override val program = this
 
             var currentMouseEvents = this@program.mouse
             override val mouse get() = currentMouseEvents
@@ -225,6 +230,10 @@ fun ktge(
                 resource.cleanUp()
                 ownedResourceSet.remove(resource)
             }
+
+            override fun exit() {
+                shouldExit = true
+            }
         }
 
         extensions.forEach {
@@ -286,6 +295,7 @@ fun ktge(
                 secsToNextDraw = secsToNextDraw.mod(1 / frameRate.toDouble())
             }
             drawer.image(canvas.colorBuffer(0))
+            if (shouldExit) application.exit()
         }
     }
 }
