@@ -37,6 +37,9 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
     private val runEachFrame: MutableList<SpriteCode> = mutableListOf()
     private val scheduledCode: MutableList<SpriteCode> = mutableListOf()
 
+    open var reactivate: (() -> Unit)? = null
+        protected set
+
     open fun costume(costume: Costume, name: String? = null) {
         costumes.addNullable(costume, name)
     }
@@ -133,16 +136,24 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
         }
     }
 
+    fun disable() {
+        val reactivationFun = parent.disableSprite(this)
+        val reactivationResource = addOwnedResource {
+            reactivate = null
+        }
+        reactivate = {
+            removeOwnedResource(reactivationResource)
+            reactivationFun()
+        }
+    }
+
     override fun disableSprites(predicate: (Drawable) -> Boolean): Map<Drawable, () -> Unit> {
         return childSprites.filter(predicate).associateWith(this::disableSprite)
     }
 
-    override fun addOwnedResource(resource: OwnedResource) {
+    override fun addOwnedResource(resource: OwnedResource): OwnedResource {
         ownedResourceSet.add(resource)
-    }
-
-    open fun addOwnedResource(resourceCleanUpFun: () -> Unit) {
-        addOwnedResource(OwnedResource(resourceCleanUpFun))
+        return resource
     }
 
     open fun<T: OwnedResource> T.add(): T {

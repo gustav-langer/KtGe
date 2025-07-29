@@ -64,7 +64,11 @@ fun interface OwnedResource {
 interface ResourceHost {
     val ownedResources: List<OwnedResource>
 
-    fun addOwnedResource(resource: OwnedResource)
+    fun addOwnedResource(resource: OwnedResource): OwnedResource
+
+    fun addOwnedResource(resourceCleanupFun: () -> Unit): OwnedResource {
+        return addOwnedResource(OwnedResource(resourceCleanupFun))
+    }
 
     fun removeOwnedResource(resource: OwnedResource)
 }
@@ -222,8 +226,9 @@ fun ktge(
                 initialized[sprite] = true
             }
 
-            override fun addOwnedResource(resource: OwnedResource) {
+            override fun addOwnedResource(resource: OwnedResource): OwnedResource {
                 ownedResourceSet.add(resource)
+                return resource
             }
 
             override fun removeOwnedResource(resource: OwnedResource) {
