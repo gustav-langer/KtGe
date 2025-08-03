@@ -56,7 +56,9 @@ open class TileGrid(
 
                 override fun deserialize(decoder: Decoder): TileGrid {
                     val string = decoder.decodeString()
-                    return DataInputStream(string.byteInputStream()).use {
+                    val b64Decoder = Base64.getDecoder()
+                    val b64Decoded = b64Decoder.decode(string)
+                    return DataInputStream(b64Decoded.inputStream()).use {
                         val tileSize = it.readInt()
                         val gridWidth = it.readInt()
                         val gridHeight = it.readInt()
