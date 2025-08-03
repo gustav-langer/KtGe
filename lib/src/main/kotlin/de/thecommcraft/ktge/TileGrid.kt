@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 
-@Serializable
 open class TileGrid(
     val tileSize: Int,
     var gridWidth: Int,
