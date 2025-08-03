@@ -101,6 +101,14 @@ open class TileGrid(
         event.change.trigger(Unit)
     }
 
+    operator fun contains(pos: IntVector2): Boolean {
+        if (pos.x < 0) return false
+        if (pos.y < 0) return false
+        if (pos.x >= gridWidth) return false
+        if (pos.y >= gridHeight) return false
+        return true
+    }
+
     fun copyTo(tileGrid: TileGrid) {
         tileGrid.loadFrom(this)
     }
