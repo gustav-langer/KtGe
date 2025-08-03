@@ -22,8 +22,15 @@ interface OwnedRenderTarget : RenderTarget, OwnedResource {
                 builder
             ) {
             override fun cleanUp() {
-                this.colorBuffer(0).destroy()
+                for (attachment in this.colorAttachments) {
+                    when (attachment) {
+                        is ColorBufferAttachment -> attachment.colorBuffer.destroy()
+                        else -> error("unsupported attachment `$attachment` in ResizableRenderTarget")
+                    }
+                }
+                this.depthBuffer?.destroy()
                 this.detachColorAttachments()
+                this.detachDepthBuffer()
                 this.destroy()
             }
         }

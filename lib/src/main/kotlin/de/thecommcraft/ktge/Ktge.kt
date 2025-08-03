@@ -57,8 +57,11 @@ interface SpriteHost {
 /**
  * A resource owned by exactly one sprite that should be cleaned up with that sprite.
  */
-fun interface OwnedResource {
+fun interface OwnedResource : AutoCloseable {
     fun cleanUp()
+    override fun close() {
+        cleanUp()
+    }
 }
 
 interface ResourceHost {

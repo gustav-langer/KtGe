@@ -105,7 +105,7 @@ abstract class Sprite : Drawable, SpriteHost, Positioned, ResourceHost {
 
     override fun draw() {
         check(!dead) { "Tried to draw a sprite that was already removed." }
-        costumes.getOrNull(costumeIdx)?.draw(program, position)
+        currentCostume?.draw(program, position)
         childSprites.forEach(Drawable::draw)
     }
 
