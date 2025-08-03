@@ -8,20 +8,78 @@ import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import java.util.Base64
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 
-open class TileGrid(val tileSize: Int, var gridWidth: Int, var gridHeight: Int = gridWidth, tiles: MutableList<MutableList<Int>>? = null, private val initFun: BuildFun<TileGrid> = {}) :
-    Sprite() {
+@Serializable
+open class TileGrid(
+    val tileSize: Int,
+    var gridWidth: Int,
+    var gridHeight: Int = gridWidth,
+    val tiles: MutableList<MutableList<Int>> = MutableList(gridWidth) { MutableList(gridHeight) { 0 } },
+    private val tileTypes: MutableMap<Int, Costume> = mutableMapOf(),
+    @Transient
+    private val initFun: BuildFun<TileGrid> = {}
+) : Sprite() {
 
     companion object {
+        fun makeSerializer(tileTypes: MutableMap<Int, Costume> = mutableMapOf()) =
+            object : KSerializer<TileGrid> {
+                override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("de.thecommcraft.ktge.TileGrid", PrimitiveKind.STRING)
+
+                override fun serialize(encoder: Encoder, value: TileGrid) {
+                    val b64Encoder = Base64.getEncoder()
+                    val baos = ByteArrayOutputStream()
+                    DataOutputStream(baos).use {
+                        it.writeInt(value.tileSize)
+                        it.writeInt(value.gridWidth)
+                        it.writeInt(value.gridHeight)
+                        it.writeBoolean(true)
+                        value.tiles.forEach { it1 ->
+                            it1.forEach { it2 ->
+                                it.writeInt(it2)
+                            }
+                        }
+                    }
+                    val string = b64Encoder.encodeToString(baos.toByteArray())
+                    encoder.encodeString(string)
+                }
+
+                override fun deserialize(decoder: Decoder): TileGrid {
+                    val string = decoder.decodeString()
+                    return DataInputStream(string.byteInputStream()).use {
+                        val tileSize = it.readInt()
+                        val gridWidth = it.readInt()
+                        val gridHeight = it.readInt()
+                        val filled = it.readBoolean()
+                        val tiles = if (filled) MutableList(gridWidth) { _ ->
+                            MutableList(gridHeight) { _ ->
+                                it.readInt()
+                            }
+                        } else MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
+                        TileGrid(tileSize, gridWidth, gridHeight, tiles, tileTypes)
+                    }
+                }
+            }
         class TileEvent {
             val change = Event<Unit>("change")
         }
     }
 
-    private val tileTypes: MutableMap<Int, Costume> = mutableMapOf()
 
+
+    @Transient
     val event = TileEvent()
-    val tiles: MutableList<MutableList<Int>> = tiles ?: MutableList(gridWidth) { MutableList(gridHeight) { 0 } }
 
     private var renderTarget: OwnedRenderTarget? = null
 
