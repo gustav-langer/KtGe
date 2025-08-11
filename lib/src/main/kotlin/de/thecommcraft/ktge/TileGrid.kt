@@ -1,14 +1,9 @@
 package de.thecommcraft.ktge
 
-import org.openrndr.Program
-import org.openrndr.draw.RenderTarget
 import org.openrndr.draw.isolatedWithTarget
-import org.openrndr.draw.renderTarget
 import org.openrndr.events.Event
 import org.openrndr.math.IntVector2
-import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -16,6 +11,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.openrndr.shape.IntRectangle
 import java.util.Base64
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -32,6 +28,7 @@ open class TileGrid(
 ) : Sprite() {
 
     companion object {
+        @Suppress("unused")
         fun makeSerializer(tileTypes: MutableMap<Int, Costume> = mutableMapOf()) =
             object : KSerializer<TileGrid> {
                 override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("de.thecommcraft.ktge.TileGrid", PrimitiveKind.STRING)
@@ -84,6 +81,7 @@ open class TileGrid(
 
     private var renderTarget: OwnedRenderTarget? = null
 
+    @Suppress("unused")
     val rect
         get() = Rectangle(position, gridWidth.toDouble() * tileSize, gridHeight.toDouble() * tileSize)
 
@@ -94,6 +92,7 @@ open class TileGrid(
     operator fun get(x: Int, y: Int): Int {
         return tiles[x][y]
     }
+
 
     operator fun set(x: Int, y: Int, value: Int) {
         tiles[x][y] = value
@@ -109,14 +108,17 @@ open class TileGrid(
         return true
     }
 
+    @Suppress("unused")
     fun copyTo(tileGrid: TileGrid) {
         tileGrid.loadFrom(this)
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun loadFrom(tileGrid: TileGrid) {
         loadNew(tileGrid.gridWidth, tileGrid.gridHeight, (tileGrid.tiles.map { it.toMutableList() }).toMutableList())
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun loadNew(width: Int, height: Int, tiles: MutableList<MutableList<Int>>) {
         gridWidth = width
         gridHeight = height
@@ -160,4 +162,100 @@ open class TileGrid(
             }
         }
     }
+
+
 }
+
+fun TileGrid.getArea(boundA: IntVector2, boundB: IntVector2) =
+    List(boundB.x - boundA.x) { dx ->
+        List(boundB.y - boundA.y) { dy ->
+            getOrNull(boundA.x + dx, boundA.y + dy)
+        }
+    }
+
+@Suppress("unused")
+fun TileGrid.getArea(bounds: IntRectangle) =
+    getArea(
+        bounds.corner,
+        bounds.corner + IntVector2(bounds.width, bounds.height)
+    )
+
+@Suppress("unused")
+fun TileGrid.getDefaultedArea(bounds: IntRectangle, default: Int) =
+    getDefaultedArea(
+        bounds.corner,
+        bounds.corner + IntVector2(bounds.width, bounds.height),
+        default
+    )
+
+fun TileGrid.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: Int) =
+    List(boundB.x - boundA.x) { dx ->
+        List(boundB.y - boundA.y) { dy ->
+            getOrNull(boundA.x + dx, boundA.y + dy) ?: default
+        }
+    }
+
+/**
+ * Sets an entire rectangle on the TileGrid.
+ *
+ * Tiles that are passed as null will not be overwritten.
+ * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
+ */
+fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, area: List<List<Int?>>) =
+    List(boundB.x - boundA.x) { dx ->
+        val x = boundA.x + dx
+        List(boundB.y - boundA.y) { dy ->
+            val y = boundA.y + dy
+            val previous = getOrNull(x, y)
+            val new = area.getOrNull(dx)?.getOrNull(dy)
+            if (previous != null && new != null) this[x, y] = new
+            previous
+        }
+    }
+
+/**
+ * Sets an entire rectangle on the TileGrid.
+ *
+ * Tiles that are passed as null will not be overwritten.
+ * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
+ */
+@Suppress("unused")
+fun TileGrid.setArea(bounds: IntRectangle, area: List<List<Int?>>) =
+    setArea(
+        bounds.corner,
+        bounds.corner + IntVector2(bounds.width, bounds.height),
+        area
+    )
+
+/**
+ * Sets an entire rectangle to a specific tile on the TileGrid.
+ *
+ * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
+ */
+@Suppress("unused")
+fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, value: Int) =
+    List(boundB.x - boundA.x) { dx ->
+        val x = boundA.x + dx
+        List(boundB.y - boundA.y) { dy ->
+            val y = boundA.y + dy
+            val previous = getOrNull(x, y)
+            if (previous != null) this[x, y] = value
+            previous
+        }
+    }
+
+/**
+ * Sets an entire rectangle to a specific tile on the TileGrid.
+ *
+ * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
+ */
+@Suppress("unused")
+fun TileGrid.setArea(bounds: IntRectangle, value: Int) =
+    setArea(
+        bounds.corner,
+        bounds.corner + IntVector2(bounds.width, bounds.height),
+        value
+    )
+
+fun TileGrid.getOrNull(x: Int, y: Int) =
+    if (IntVector2(x, y) !in this) null else get(x, y)
