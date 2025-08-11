@@ -186,8 +186,8 @@ open class TileGrid(
     fun loadNew(width: Int, height: Int, tiles: MutableList<MutableList<Int>>) {
         gridWidth = width
         gridHeight = height
-        this.tiles.removeIf { true }
-        tiles.forEach(this.tiles::add)
+        this.tiles.clear()
+        tiles.forEach { this.tiles.add(it.toMutableList()) }
         regenerateRenderTarget()
         event.change.trigger(Unit)
     }
