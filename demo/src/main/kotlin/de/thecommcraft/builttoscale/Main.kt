@@ -18,7 +18,7 @@ fun loadTile(tileName: String) = "data/images/$tileName.png"
     .complete()
     .toCostume()
 
-val tileBackground = TileGrid(tileSize = 50, gridWidth = 16, gridHeight = 12) {
+val tileBackground = TileGrid(tileSize = 50, width = 16, height = 12) {
     tileType(0, loadTile("tile0"))
     tileType(1, loadTile("tile1"))
 
