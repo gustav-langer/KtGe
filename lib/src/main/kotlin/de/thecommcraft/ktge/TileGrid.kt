@@ -43,7 +43,7 @@ interface GridOfTiles {
 open class OffscreenTileGrid(
     width: Int,
     height: Int = width,
-    override val tiles: MutableList<MutableList<Int>>
+    override val tiles: MutableList<MutableList<Int>> = MutableList(width) { MutableList(height) { 0 } }
 ) : GridOfTiles {
 
     override var gridWidth: Int = width
