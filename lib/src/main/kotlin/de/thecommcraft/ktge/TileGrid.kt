@@ -17,15 +17,93 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 
+interface GridOfTiles {
+    var gridWidth: Int
+    var gridHeight: Int
+    val tiles: MutableList<MutableList<Int>>
+
+    operator fun contains(pos: IntVector2): Boolean {
+        if (pos.x < 0) return false
+        if (pos.y < 0) return false
+        if (pos.x >= gridWidth) return false
+        if (pos.y >= gridHeight) return false
+        return true
+    }
+
+    operator fun get(x: Int, y: Int): Int {
+        return tiles[x][y]
+    }
+
+    operator fun set(x: Int, y: Int, value: Int) {
+        tiles[x][y] = value
+    }
+}
+
+@Suppress("unused")
+open class OffscreenTileGrid(
+    width: Int,
+    height: Int = width,
+    override val tiles: MutableList<MutableList<Int>>
+) : GridOfTiles {
+
+    override var gridWidth: Int = width
+        set(value) {
+            field = value
+            if (tiles.size < value) repeat(value - tiles.size) {
+                tiles.addLast(MutableList(gridHeight) { 0 })
+            }
+            if (tiles.size > value) repeat(tiles.size - value) {
+                tiles.removeLast()
+            }
+        }
+    override var gridHeight: Int = height
+        set(value) {
+            field = value
+            tiles.forEach { col ->
+                if (col.size < value) repeat(value - col.size) {
+                    col.addLast(0)
+                }
+                if (col.size > value) repeat(col.size - value) {
+                    col.removeLast()
+                }
+            }
+        }
+}
+
 open class TileGrid(
     val tileSize: Int,
-    var gridWidth: Int,
-    var gridHeight: Int = gridWidth,
-    val tiles: MutableList<MutableList<Int>> = MutableList(gridWidth) { MutableList(gridHeight) { 0 } },
+    width: Int,
+    height: Int = width,
+    override val tiles: MutableList<MutableList<Int>> = MutableList(width) { MutableList(height) { 0 } },
     private val tileTypes: MutableMap<Int, Costume> = mutableMapOf(),
     @Transient
     private val initFun: BuildFun<TileGrid> = {}
-) : Sprite() {
+) : Sprite(), GridOfTiles {
+
+    override var gridWidth: Int = width
+        set(value) {
+            field = value
+            if (tiles.size < value) repeat(value - tiles.size) {
+                tiles.addLast(MutableList(gridHeight) { 0 })
+            }
+            if (tiles.size > value) repeat(tiles.size - value) {
+                tiles.removeLast()
+            }
+            regenerateRenderTarget()
+        }
+    override var gridHeight: Int = height
+        set(value) {
+            field = value
+            tiles.forEach { col ->
+                if (col.size < value) repeat(value - col.size) {
+                    col.addLast(0)
+                }
+                if (col.size > value) repeat(col.size - value) {
+                    col.removeLast()
+                }
+            }
+            regenerateRenderTarget()
+        }
 
     companion object {
         @Suppress("unused")
@@ -73,8 +151,11 @@ open class TileGrid(
             val change = Event<Unit>("change")
         }
     }
-
-
+    override operator fun set(x: Int, y: Int, value: Int) {
+        super.set(x, y, value)
+        drawTile(x, y)
+        event.change.trigger(Unit)
+    }
 
     @Transient
     val event = TileEvent()
@@ -87,25 +168,6 @@ open class TileGrid(
 
     fun tileType(id: Int, costume: Costume) {
         tileTypes[id] = costume
-    }
-
-    operator fun get(x: Int, y: Int): Int {
-        return tiles[x][y]
-    }
-
-
-    operator fun set(x: Int, y: Int, value: Int) {
-        tiles[x][y] = value
-        drawTile(x, y)
-        event.change.trigger(Unit)
-    }
-
-    operator fun contains(pos: IntVector2): Boolean {
-        if (pos.x < 0) return false
-        if (pos.y < 0) return false
-        if (pos.x >= gridWidth) return false
-        if (pos.y >= gridHeight) return false
-        return true
     }
 
     @Suppress("unused")
@@ -162,11 +224,9 @@ open class TileGrid(
             }
         }
     }
-
-
 }
 
-fun TileGrid.getArea(boundA: IntVector2, boundB: IntVector2) =
+fun GridOfTiles.getArea(boundA: IntVector2, boundB: IntVector2) =
     List(boundB.x - boundA.x) { dx ->
         List(boundB.y - boundA.y) { dy ->
             getOrNull(boundA.x + dx, boundA.y + dy)
@@ -174,21 +234,21 @@ fun TileGrid.getArea(boundA: IntVector2, boundB: IntVector2) =
     }
 
 @Suppress("unused")
-fun TileGrid.getArea(bounds: IntRectangle) =
+fun GridOfTiles.getArea(bounds: IntRectangle) =
     getArea(
         bounds.corner,
         bounds.corner + IntVector2(bounds.width, bounds.height)
     )
 
 @Suppress("unused")
-fun TileGrid.getDefaultedArea(bounds: IntRectangle, default: Int) =
+fun GridOfTiles.getDefaultedArea(bounds: IntRectangle, default: Int) =
     getDefaultedArea(
         bounds.corner,
         bounds.corner + IntVector2(bounds.width, bounds.height),
         default
     )
 
-fun TileGrid.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: Int) =
+fun GridOfTiles.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: Int) =
     List(boundB.x - boundA.x) { dx ->
         List(boundB.y - boundA.y) { dy ->
             getOrNull(boundA.x + dx, boundA.y + dy) ?: default
@@ -201,7 +261,7 @@ fun TileGrid.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: I
  * Tiles that are passed as null will not be overwritten.
  * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
  */
-fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, area: List<List<Int?>>) =
+fun GridOfTiles.setArea(boundA: IntVector2, boundB: IntVector2, area: List<List<Int?>>) =
     List(boundB.x - boundA.x) { dx ->
         val x = boundA.x + dx
         List(boundB.y - boundA.y) { dy ->
@@ -220,7 +280,7 @@ fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, area: List<List<Int
  * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
  */
 @Suppress("unused")
-fun TileGrid.setArea(bounds: IntRectangle, area: List<List<Int?>>) =
+fun GridOfTiles.setArea(bounds: IntRectangle, area: List<List<Int?>>) =
     setArea(
         bounds.corner,
         bounds.corner + IntVector2(bounds.width, bounds.height),
@@ -233,7 +293,7 @@ fun TileGrid.setArea(bounds: IntRectangle, area: List<List<Int?>>) =
  * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
  */
 @Suppress("unused")
-fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, value: Int) =
+fun GridOfTiles.setArea(boundA: IntVector2, boundB: IntVector2, value: Int) =
     List(boundB.x - boundA.x) { dx ->
         val x = boundA.x + dx
         List(boundB.y - boundA.y) { dy ->
@@ -250,12 +310,12 @@ fun TileGrid.setArea(boundA: IntVector2, boundB: IntVector2, value: Int) =
  * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
  */
 @Suppress("unused")
-fun TileGrid.setArea(bounds: IntRectangle, value: Int) =
+fun GridOfTiles.setArea(bounds: IntRectangle, value: Int) =
     setArea(
         bounds.corner,
         bounds.corner + IntVector2(bounds.width, bounds.height),
         value
     )
 
-fun TileGrid.getOrNull(x: Int, y: Int) =
+fun GridOfTiles.getOrNull(x: Int, y: Int) =
     if (IntVector2(x, y) !in this) null else get(x, y)
