@@ -152,7 +152,9 @@ open class TileGrid(
         }
     }
     override operator fun set(x: Int, y: Int, value: Int) {
+        val prev = this[x, y]
         super.set(x, y, value)
+        if (prev == value) return
         drawTile(x, y)
         event.change.trigger(Unit)
     }
