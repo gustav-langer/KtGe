@@ -50,7 +50,7 @@ open class OffscreenTileGrid(
         set(value) {
             field = value
             if (tiles.size < value) repeat(value - tiles.size) {
-                tiles.addLast(MutableList(gridHeight) { 0 })
+                tiles.add(MutableList(gridHeight) { 0 })
             }
             if (tiles.size > value) repeat(tiles.size - value) {
                 tiles.removeLast()
@@ -61,7 +61,7 @@ open class OffscreenTileGrid(
             field = value
             tiles.forEach { col ->
                 if (col.size < value) repeat(value - col.size) {
-                    col.addLast(0)
+                    col.add(0)
                 }
                 if (col.size > value) repeat(col.size - value) {
                     col.removeLast()
@@ -84,7 +84,7 @@ open class TileGrid(
         set(value) {
             field = value
             if (tiles.size < value) repeat(value - tiles.size) {
-                tiles.addLast(MutableList(gridHeight) { 0 })
+                tiles.add(MutableList(gridHeight) { 0 })
             }
             if (tiles.size > value) repeat(tiles.size - value) {
                 tiles.removeLast()
@@ -96,7 +96,7 @@ open class TileGrid(
             field = value
             tiles.forEach { col ->
                 if (col.size < value) repeat(value - col.size) {
-                    col.addLast(0)
+                    col.add(0)
                 }
                 if (col.size > value) repeat(col.size - value) {
                     col.removeLast()
