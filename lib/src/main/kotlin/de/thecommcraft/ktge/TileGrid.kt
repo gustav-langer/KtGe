@@ -228,6 +228,10 @@ open class TileGrid(
     }
 }
 
+@Suppress("unused")
+val GridOfTiles.bounds
+    get() = IntRectangle(0, 0, gridWidth, gridHeight)
+
 fun GridOfTiles.getArea(boundA: IntVector2, boundB: IntVector2) =
     List(boundB.x - boundA.x) { dx ->
         List(boundB.y - boundA.y) { dy ->
