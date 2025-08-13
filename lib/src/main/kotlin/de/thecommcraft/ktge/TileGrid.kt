@@ -230,11 +230,11 @@ open class TileGrid(
 
 @Suppress("unused")
 val GridOfTiles.bounds
-    get() = IntRectangle(0, 0, gridWidth, gridHeight)
+    get() = IntRectangle(0, 0, gridWidth - 1, gridHeight - 1)
 
 fun GridOfTiles.getArea(boundA: IntVector2, boundB: IntVector2) =
-    List(boundB.x - boundA.x) { dx ->
-        List(boundB.y - boundA.y) { dy ->
+    List(boundB.x - boundA.x + 1) { dx ->
+        List(boundB.y - boundA.y + 1) { dy ->
             getOrNull(boundA.x + dx, boundA.y + dy)
         }
     }
@@ -246,6 +246,13 @@ fun GridOfTiles.getArea(bounds: IntRectangle) =
         bounds.corner + IntVector2(bounds.width, bounds.height)
     )
 
+fun GridOfTiles.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: Int) =
+    List(boundB.x - boundA.x + 1) { dx ->
+        List(boundB.y - boundA.y + 1) { dy ->
+            getOrNull(boundA.x + dx, boundA.y + dy) ?: default
+        }
+    }
+
 @Suppress("unused")
 fun GridOfTiles.getDefaultedArea(bounds: IntRectangle, default: Int) =
     getDefaultedArea(
@@ -254,13 +261,6 @@ fun GridOfTiles.getDefaultedArea(bounds: IntRectangle, default: Int) =
         default
     )
 
-fun GridOfTiles.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default: Int) =
-    List(boundB.x - boundA.x) { dx ->
-        List(boundB.y - boundA.y) { dy ->
-            getOrNull(boundA.x + dx, boundA.y + dy) ?: default
-        }
-    }
-
 /**
  * Sets an entire rectangle on the TileGrid.
  *
@@ -268,9 +268,9 @@ fun GridOfTiles.getDefaultedArea(boundA: IntVector2, boundB: IntVector2, default
  * @return A rectangle that has all the previous tiles at the positions of the input rectangle.
  */
 fun GridOfTiles.setArea(boundA: IntVector2, boundB: IntVector2, area: List<List<Int?>>) =
-    List(boundB.x - boundA.x) { dx ->
+    List(boundB.x - boundA.x + 1) { dx ->
         val x = boundA.x + dx
-        List(boundB.y - boundA.y) { dy ->
+        List(boundB.y - boundA.y + 1) { dy ->
             val y = boundA.y + dy
             val previous = getOrNull(x, y)
             val new = area.getOrNull(dx)?.getOrNull(dy)
@@ -300,9 +300,9 @@ fun GridOfTiles.setArea(bounds: IntRectangle, area: List<List<Int?>>) =
  */
 @Suppress("unused")
 fun GridOfTiles.setArea(boundA: IntVector2, boundB: IntVector2, value: Int) =
-    List(boundB.x - boundA.x) { dx ->
+    List(boundB.x - boundA.x + 1) { dx ->
         val x = boundA.x + dx
-        List(boundB.y - boundA.y) { dy ->
+        List(boundB.y - boundA.y + 1) { dy ->
             val y = boundA.y + dy
             val previous = getOrNull(x, y)
             if (previous != null) this[x, y] = value
