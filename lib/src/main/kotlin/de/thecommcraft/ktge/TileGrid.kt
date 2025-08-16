@@ -156,12 +156,13 @@ open class TileGrid(
         super.set(x, y, value)
         if (prev == value) return
         drawTile(x, y)
-        event.change.trigger(Unit)
+        hasChangedThisFrame = true
     }
 
     @Transient
     val event = TileEvent()
 
+    private var hasChangedThisFrame = false
     private var renderTarget: OwnedRenderTarget? = null
 
     @Suppress("unused")
@@ -189,7 +190,7 @@ open class TileGrid(
         this.tiles.clear()
         tiles.forEach { this.tiles.add(it.toMutableList()) }
         regenerateRenderTarget()
-        event.change.trigger(Unit)
+        hasChangedThisFrame = true
     }
 
     private fun drawTile(gridX: Int, gridY: Int) {
@@ -207,6 +208,10 @@ open class TileGrid(
     }
 
     override fun initSprite() {
+        frame {
+            if (hasChangedThisFrame) event.change.trigger(Unit)
+            hasChangedThisFrame = false
+        }
         regenerateRenderTarget(initFun)
         costume(DrawerCostume {
             renderTarget?.let { it1 -> program.drawer.image(it1.colorBuffer(0), it) }
