@@ -426,7 +426,7 @@ fun GridOfTiles.copyBoundsDataTo(
 }
 
 fun GridOfTiles.exportBoundsData(bounds: IntRectangle): OffscreenTileGrid {
-    val offscreenTileGrid = OffscreenTileGrid(gridWidth, gridHeight)
+    val offscreenTileGrid = OffscreenTileGrid(bounds.width + 1, bounds.height + 1)
     copyBoundsDataTo(offscreenTileGrid, bounds, bounds.copy(corner = IntVector2.ZERO))
     return offscreenTileGrid
 }
