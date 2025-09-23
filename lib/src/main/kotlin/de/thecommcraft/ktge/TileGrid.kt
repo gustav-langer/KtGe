@@ -170,7 +170,7 @@ open class TileGrid(
         @Suppress("unused")
         fun makeSerializer(
             tileTypes: MutableMap<Int, Costume> = mutableMapOf(),
-            gridTileMetaData: List<GridTileMetaData<*>>
+            gridTileMetaData: List<GridTileMetaData<*>> = listOf()
         ) =
             object : KSerializer<TileGrid> {
                 override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("de.thecommcraft.ktge.TileGrid", PrimitiveKind.STRING)
