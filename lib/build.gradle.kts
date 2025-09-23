@@ -97,6 +97,11 @@ plugins {
     kotlin("plugin.serialization") version "2.2.0"
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -166,7 +171,7 @@ publishing {
         create<MavenPublication>("maven") {
             artifactId = "ktge"
 
-            from(components["kotlin"])
+            from(components["java"])
         }
     }
 }
